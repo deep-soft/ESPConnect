@@ -2,4 +2,9 @@ body {
   margin: 0;
   background: radial-gradient(140% 140% at 0% 0%, #0f172a 0%, #020617 60%);
   min-height: 100vh;
+  transition: background 0.4s ease;
+}
+
+body.light-theme {
+  background: radial-gradient(140% 140% at 0% 0%, #f8fafc 0%, #e2e8f0 60%);
 }

@@ -7,10 +7,20 @@
             <div class="d-flex align-center w-100">
               <div class="text-h5 font-weight-semibold">ESP32 Web Flasher</div>
               <v-spacer />
+              <v-btn
+                :title="`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`"
+                variant="text"
+                icon
+                color="primary"
+                size="small"
+                @click="toggleTheme"
+              >
+                <v-icon>{{ themeIcon }}</v-icon>
+              </v-btn>
               <v-chip
                 :color="connected ? 'success' : 'grey'"
                 :prepend-icon="connected ? 'mdi-usb-port' : 'mdi-usb-off'"
-                class="text-capitalize"
+                class="text-capitalize ms-2"
                 variant="flat"
               >
                 {{ connected ? 'Connected' : 'Disconnected' }}
@@ -70,6 +80,58 @@
 
           <v-divider class="my-4" />
 
+          <v-expand-transition>
+            <v-card v-if="chipDetails" class="mb-4" variant="tonal">
+              <v-card-text>
+                <v-row dense>
+                  <v-col cols="12" md="6">
+                    <div class="text-subtitle-2 text-medium-emphasis">Chip</div>
+                    <div class="text-body-1 font-weight-medium">
+                      {{ chipDetails.description || chipDetails.name }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      {{ chipDetails.name }}
+                    </div>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="text-subtitle-2 text-medium-emphasis">Flash</div>
+                    <div class="text-body-1 font-weight-medium">
+                      {{ chipDetails.flashSize || 'Unknown' }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis mt-1">
+                      Crystal: {{ chipDetails.crystal || 'Unknown' }}
+                    </div>
+                    <div class="text-caption text-medium-emphasis">
+                      MAC: {{ chipDetails.mac || 'Unknown' }}
+                    </div>
+                  </v-col>
+                  <v-col cols="12">
+                    <div class="text-subtitle-2 text-medium-emphasis mb-2">Features</div>
+                    <v-chip-group column>
+                      <v-chip
+                        v-for="feature in chipDetails.features"
+                        :key="feature"
+                        class="me-2 mb-2"
+                        size="small"
+                        variant="elevated"
+                        color="primary"
+                      >
+                        {{ feature }}
+                      </v-chip>
+                      <v-chip
+                        v-if="!chipDetails.features?.length"
+                        size="small"
+                        variant="outlined"
+                      >
+                        Not reported
+                      </v-chip>
+                    </v-chip-group>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+            </v-card>
+          </v-expand-transition>
+
           <v-row class="mb-2" dense>
             <v-col cols="12" md="8">
               <v-file-input
@@ -88,6 +150,19 @@
                 placeholder="0x0"
                 density="comfortable"
                 :disabled="busy"
+              />
+            </v-col>
+            <v-col cols="12" md="4">
+              <v-select
+                v-model="selectedPreset"
+                :items="offsetPresets"
+                label="Recommended offsets"
+                item-title="label"
+                item-value="value"
+                clearable
+                density="comfortable"
+                :disabled="busy"
+                @update:model-value="applyOffsetPreset"
               />
             </v-col>
           </v-row>
@@ -145,14 +220,44 @@
             </v-card-text>
           </v-card>
         </v-card>
+
+        <v-dialog v-model="showBootDialog" width="420">
+          <v-card>
+            <v-card-title class="text-h6">
+              <v-icon start color="warning">mdi-alert-circle-outline</v-icon>
+              Connection Tips
+            </v-card-title>
+            <v-card-text>
+              <p class="text-body-2">
+                We couldn’t communicate with the board. Try putting your ESP32 into bootloader mode:
+              </p>
+              <ol class="text-body-2 ps-4">
+                <li>Hold the <strong>BOOT</strong> (GPIO0) button.</li>
+                <li>Tap <strong>RESET</strong>, then release it.</li>
+                <li>Release the BOOT button after one second.</li>
+                <li>Click <strong>Connect</strong> again.</li>
+              </ol>
+              <p class="text-caption text-medium-emphasis" v-if="lastErrorMessage">
+                Last error: {{ lastErrorMessage }}
+              </p>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn color="primary" variant="text" @click="showBootDialog = false">
+                Got it
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-container>
     </v-main>
   </v-app>
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { ESPLoader, Transport } from 'esptool-js';
+import { useTheme } from 'vuetify';
 
 const SUPPORTED_VENDORS = [
   { usbVendorId: 0x303a },
@@ -173,6 +278,7 @@ const selectedBaud = ref('921600');
 const baudrateOptions = ['115200', '230400', '460800', '921600'];
 const flashOffset = ref('0x0');
 const eraseFlash = ref(false);
+const selectedPreset = ref(null);
 
 const logBuffer = ref('');
 const currentPort = ref(null);
@@ -180,6 +286,48 @@ const transport = ref(null);
 const loader = ref(null);
 const firmwareBuffer = ref(null);
 const firmwareName = ref('');
+const chipDetails = ref(null);
+
+const showBootDialog = ref(false);
+const lastErrorMessage = ref('');
+
+const offsetPresets = [
+  { label: 'Application (0x10000)', value: '0x10000' },
+  { label: 'Bootloader (0x1000)', value: '0x1000' },
+  { label: 'Partition Table (0x8000)', value: '0x8000' },
+  { label: 'NVS Storage (0x9000)', value: '0x9000' },
+];
+
+const theme = useTheme();
+const storedTheme =
+  typeof window !== 'undefined' ? window.localStorage.getItem('esp32-theme') : null;
+const currentTheme = ref(storedTheme === 'light' ? 'light' : 'dark');
+const isDarkTheme = computed(() => currentTheme.value === 'dark');
+const themeIcon = computed(() =>
+  isDarkTheme.value ? 'mdi-weather-night' : 'mdi-white-balance-sunny'
+);
+
+function applyThemeClass(name) {
+  if (typeof document !== 'undefined') {
+    document.body.classList.toggle('light-theme', name === 'light');
+  }
+}
+
+watch(
+  currentTheme,
+  name => {
+    theme.global.name.value = name;
+    applyThemeClass(name);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('esp32-theme', name);
+    }
+  },
+  { immediate: true }
+);
+
+function toggleTheme() {
+  currentTheme.value = isDarkTheme.value ? 'light' : 'dark';
+}
 
 const statusLabel = computed(() =>
   connected.value ? statusDetails.value : 'No device connected. Choose a port to begin.'
@@ -225,6 +373,7 @@ async function disconnectTransport() {
     loader.value = null;
     connected.value = false;
     statusDetails.value = 'No device connected.';
+    chipDetails.value = null;
   }
 }
 
@@ -240,6 +389,7 @@ async function connect() {
   appendLog('Requesting serial port access...');
 
   try {
+    showBootDialog.value = false;
     currentPort.value = await navigator.serial.requestPort({ filters: SUPPORTED_VENDORS });
     const baudrate = Number.parseInt(selectedBaud.value, 10) || DEFAULT_ROM_BAUD;
     transport.value = new Transport(currentPort.value);
@@ -251,7 +401,34 @@ async function connect() {
     });
 
     const chipName = await loader.value.main('default_reset');
-    await loader.value.flashId();
+    const chip = loader.value.chip;
+
+    const [description, features, crystalFreq, macAddress, flashSizeKb] = await Promise.all([
+      chip?.getChipDescription(loader.value).catch(() => chipName),
+      chip?.getChipFeatures(loader.value).catch(() => ''),
+      chip?.getCrystalFreq(loader.value).catch(() => null),
+      chip?.readMac(loader.value).catch(() => ''),
+      loader.value.getFlashSize().catch(() => null),
+    ]);
+
+    const featureList = typeof features === 'string' ? features.split(/,\s*/) : [];
+    const flashLabel =
+      typeof flashSizeKb === 'number'
+        ? flashSizeKb >= 1024
+          ? `${(flashSizeKb / 1024).toFixed(flashSizeKb % 1024 === 0 ? 0 : 1)} MB`
+          : `${flashSizeKb} KB`
+        : null;
+    const crystalLabel =
+      typeof crystalFreq === 'number' ? `${Number(crystalFreq).toFixed(0)} MHz` : null;
+
+    chipDetails.value = {
+      name: chipName,
+      description,
+      features: featureList.filter(Boolean),
+      mac: macAddress,
+      flashSize: flashLabel,
+      crystal: crystalLabel,
+    };
 
     connected.value = true;
     statusDetails.value = `Connected to ${chipName} @ ${baudrate} baud.`;
@@ -261,6 +438,8 @@ async function connect() {
       appendLog('Port selection was cancelled.');
     } else {
       appendLog(`Connection failed: ${error?.message || error}`, '[error]');
+      lastErrorMessage.value = error?.message || String(error);
+      showBootDialog.value = true;
     }
     await disconnectTransport();
   } finally {
@@ -331,7 +510,7 @@ async function flashFirmware() {
 
     await loader.value.after('hard_reset');
     const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
-    appendLog(`Flashing complete in ${elapsed}s. Device rebooted.`);
+  appendLog(`Flashing complete in ${elapsed}s. Device rebooted.`);
   } catch (error) {
     appendLog(`Flashing failed: ${error?.message || error}`, '[error]');
   } finally {
@@ -354,6 +533,13 @@ async function handleFirmwareInput(files) {
   appendLog(`Firmware loaded: ${file.name} (${file.size} bytes).`);
 }
 
+function applyOffsetPreset(value) {
+  if (value) {
+    flashOffset.value = value;
+    appendLog(`Applied preset offset ${value}.`);
+  }
+}
+
 function handleBeforeUnload() {
   if (connected.value && transport.value) {
     transport.value.disconnect();
@@ -362,6 +548,8 @@ function handleBeforeUnload() {
 
 onMounted(() => {
   window.addEventListener('beforeunload', handleBeforeUnload);
+  theme.global.name.value = currentTheme.value;
+  applyThemeClass(currentTheme.value);
 });
 
 onBeforeUnmount(() => {
