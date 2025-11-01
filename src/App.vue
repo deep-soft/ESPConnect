@@ -40,45 +40,83 @@
                 hide-details
                 class="status-select"
                 :disabled="busy || flashInProgress || maintenanceBusy || baudChangeBusy || monitorActive"
-              />
-            </div>
-            <v-spacer />
-            <v-btn
-              :title="`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`"
-              variant="text"
-              icon
-              color="surface"
-              size="small"
-              class="status-theme-toggle"
-              @click="toggleTheme"
-            >
-              <v-icon>{{ themeIcon }}</v-icon>
-            </v-btn>
-          <v-chip
-            :color="connected ? 'success' : 'grey-darken-1'"
-            class="text-capitalize"
-            variant="elevated"
+          />
+        </div>
+        <v-spacer />
+        <div class="status-links">
+          <v-btn
+            class="status-link"
+            color="surface"
+            variant="text"
             density="comfortable"
+            href="https://www.youtube.com/channel/UCnnU_HGvTr8ewpqvHe2llDw"
+            target="_blank"
+            rel="noopener"
           >
-            <template #prepend>
-              <v-icon
-                v-if="connected"
-                start
-                class="status-chip-icon status-chip-icon--connected"
-              >
-                mdi-usb-port
-              </v-icon>
-              <v-icon
-                v-else
-                start
-                class="status-chip-icon status-chip-icon--disconnected"
-              >
-                mdi-usb-c-port
-              </v-icon>
-            </template>
-            {{ connectionChipLabel }}
-          </v-chip>
-          </v-system-bar>
+            <v-icon start>mdi-youtube</v-icon>
+            Tutorial
+          </v-btn>
+          <v-btn
+            class="status-link"
+            color="surface"
+            variant="text"
+            density="comfortable"
+            href="https://buymeacoffee.com/thelastoutpostworkshop"
+            target="_blank"
+            rel="noopener"
+          >
+            <v-icon start>mdi-coffee</v-icon>
+            Buy Me a Coffee
+          </v-btn>
+          <v-btn
+            class="status-link"
+            color="surface"
+            variant="text"
+            density="comfortable"
+            href="https://github.com/thelastoutpostworkshop/ESP32PartitionBuilder"
+            target="_blank"
+            rel="noopener"
+          >
+            <v-icon start>mdi-lifebuoy</v-icon>
+            Get Help
+          </v-btn>
+        </div>
+        <v-btn
+          :title="`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`"
+          variant="text"
+          icon
+          color="surface"
+          size="small"
+          class="status-theme-toggle"
+          @click="toggleTheme"
+        >
+          <v-icon>{{ themeIcon }}</v-icon>
+        </v-btn>
+        <v-chip
+          :color="connected ? 'success' : 'grey-darken-1'"
+          class="text-capitalize"
+          variant="elevated"
+          density="comfortable"
+        >
+          <template #prepend>
+            <v-icon
+              v-if="connected"
+              start
+              class="status-chip-icon status-chip-icon--connected"
+            >
+              mdi-usb-port
+            </v-icon>
+            <v-icon
+              v-else
+              start
+              class="status-chip-icon status-chip-icon--disconnected"
+            >
+              mdi-usb-c-port
+            </v-icon>
+          </template>
+          {{ connectionChipLabel }}
+        </v-chip>
+      </v-system-bar>
 
           <v-alert
             v-if="!serialSupported"
@@ -2351,6 +2389,17 @@ onBeforeUnmount(() => {
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.status-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.status-link {
+  text-transform: none;
 }
 
 .status-button {
