@@ -407,8 +407,8 @@ const JEDEC_FLASH_PARTS = {
 };
 
 const VENDOR_ALIASES = {
-  AP_3v3: 'AP Memory (3.3 V)',
-  AP_1v8: 'AP Memory (1.8 V)',
+  AP_3v3: 'AP Memory 3.3 V',
+  AP_1v8: 'AP Memory 1.8 V',
 };
 
 const USB_VENDOR_NAMES = {
