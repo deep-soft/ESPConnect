@@ -387,29 +387,160 @@
       SPIFFS Agent (ESP32-S3)
     </v-card-title>
     <v-card-text class="tools-card__body">
-      <div class="spiffs-agent__status">{{ spiffsAgentSummary }}</div>
-      <div class="tools-card__actions">
+      <div class="spiffs-agent__status">
+        <span>{{ spiffsAgentSummary }}</span>
+        <span v-if="spiffsAgentStatusMessage">{{ spiffsAgentStatusMessage }}</span>
+      </div>
+      <v-alert
+        v-if="spiffsAgentError"
+        type="error"
+        variant="tonal"
+        border="start"
+        density="comfortable"
+        class="mt-2"
+      >
+        {{ spiffsAgentError }}
+      </v-alert>
+      <div class="tools-card__actions spiffs-agent__actions">
         <v-btn
           color="primary"
           variant="tonal"
           :loading="spiffsAgentLoading"
-          :disabled="busy || maintenanceBusy || spiffsAgentLoading"
+          :disabled="busy || maintenanceBusy || spiffsAgentLoading || spiffsAgentBusy"
           @click="emit('load-spiffs-agent')"
         >
           <v-icon start>mdi-download</v-icon>
           Load Stub
         </v-btn>
+        <v-btn
+          color="primary"
+          variant="elevated"
+          :loading="spiffsAgentUploading"
+          :disabled="
+            busy ||
+            maintenanceBusy ||
+            spiffsAgentLoading ||
+            !spiffsAgentLoaded ||
+            spiffsAgentBusy ||
+            spiffsAgentRunning
+          "
+          @click="emit('deploy-spiffs-agent')"
+        >
+          <v-icon start>mdi-send</v-icon>
+          Upload &amp; Start
+        </v-btn>
+        <v-btn
+          v-if="spiffsAgentRunning"
+          color="primary"
+          variant="text"
+          :disabled="busy || maintenanceBusy || spiffsAgentBusy"
+          @click="emit('spiffs-list')"
+        >
+          <v-icon start>mdi-refresh</v-icon>
+          Refresh Files
+        </v-btn>
+        <v-btn
+          v-if="spiffsAgentRunning"
+          color="warning"
+          variant="text"
+          :disabled="busy || maintenanceBusy || spiffsAgentBusy"
+          @click="emit('spiffs-format')"
+        >
+          <v-icon start>mdi-broom</v-icon>
+          Format SPIFFS
+        </v-btn>
+        <v-btn
+          v-if="spiffsAgentRunning"
+          color="secondary"
+          variant="text"
+          :disabled="busy || maintenanceBusy || spiffsAgentBusy"
+          @click="emit('spiffs-reset')"
+        >
+          <v-icon start>mdi-restart</v-icon>
+          Reset Device
+        </v-btn>
       </div>
       <v-alert
-        v-if="spiffsAgentLoaded && !spiffsAgentLoading"
+        v-if="spiffsAgentLoaded && !spiffsAgentRunning"
         type="info"
         variant="tonal"
         border="start"
         density="comfortable"
         class="mt-3"
       >
-        Stub binary is cached in the browser. Future integration can now upload it to the device.
+        Stub binary is cached in the browser. Upload it to the connected device when ready.
       </v-alert>
+      <v-divider v-if="spiffsAgentRunning" class="my-4" />
+      <div v-if="spiffsAgentRunning" class="spiffs-agent__body">
+        <div class="spiffs-agent__upload">
+          <v-file-input
+            :model-value="spiffsUploadFile"
+            label="Local file"
+            density="comfortable"
+            clearable
+            prepend-icon="mdi-file-upload"
+            accept="*/*"
+            :disabled="busy || maintenanceBusy || spiffsAgentBusy"
+            @update:model-value="handleSpiffsFileInput"
+          />
+          <v-text-field
+            v-model="spiffsUploadName"
+            label="Store as"
+            density="comfortable"
+            placeholder="example.txt"
+            :disabled="busy || maintenanceBusy || spiffsAgentBusy"
+          />
+          <v-btn
+            color="primary"
+            variant="elevated"
+            :disabled="!canUploadToSpiffs || busy || maintenanceBusy"
+            @click="handleSpiffsUpload"
+          >
+            <v-icon start>mdi-upload</v-icon>
+            Upload File
+          </v-btn>
+        </div>
+        <v-table v-if="spiffsAgentFiles.length" class="spiffs-agent__table" density="comfortable">
+          <thead>
+            <tr>
+              <th class="text-start">Name</th>
+              <th class="text-start">Size</th>
+              <th class="text-start spiffs-agent__actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="file in spiffsAgentFiles" :key="file.name">
+              <td><code>{{ file.name }}</code></td>
+              <td>{{ formatSpiffsFileSize(file.size) }}</td>
+              <td class="spiffs-agent__row-actions">
+                <v-btn
+                  size="small"
+                  variant="text"
+                  color="primary"
+                  :disabled="spiffsAgentBusy || busy || maintenanceBusy"
+                  @click="emit('spiffs-download', file.name)"
+                >
+                  <v-icon start size="16">mdi-download</v-icon>
+                  Download
+                </v-btn>
+                <v-btn
+                  size="small"
+                  variant="text"
+                  color="error"
+                  :disabled="spiffsAgentBusy || busy || maintenanceBusy"
+                  @click="emit('spiffs-delete', file.name)"
+                >
+                  <v-icon start size="16">mdi-delete</v-icon>
+                  Delete
+                </v-btn>
+              </td>
+            </tr>
+          </tbody>
+        </v-table>
+        <div v-else class="spiffs-agent__empty">
+          No files on SPIFFS yet. Use the upload control above to add one.
+        </div>
+      </div>
     </v-card-text>
   </v-card>
   <v-dialog
@@ -609,7 +740,17 @@ const props = defineProps({
   },
   spiffsAgentStatus: {
     type: Object,
-    default: () => ({ loading: false, loaded: false, size: 0, error: null }),
+    default: () => ({
+      loading: false,
+      loaded: false,
+      size: 0,
+      error: null,
+      uploading: false,
+      busy: false,
+      running: false,
+      status: '',
+      files: [],
+    }),
   },
   downloadProgress: {
     type: Object,
@@ -644,6 +785,13 @@ const emit = defineEmits([
   'select-register',
   'update:integrityPartition',
   'load-spiffs-agent',
+  'deploy-spiffs-agent',
+  'spiffs-list',
+  'spiffs-delete',
+  'spiffs-upload',
+  'spiffs-download',
+  'spiffs-format',
+  'spiffs-reset',
 ]);
 
 function handlePresetChange(value) {
@@ -656,16 +804,89 @@ const selectedRegisterInfo = ref(null);
 const integrityPartition = computed(() => props.integrityPartition ?? null);
 const spiffsAgentLoading = computed(() => Boolean(props.spiffsAgentStatus?.loading));
 const spiffsAgentLoaded = computed(() => Boolean(props.spiffsAgentStatus?.loaded));
+const spiffsAgentUploading = computed(() => Boolean(props.spiffsAgentStatus?.uploading));
+const spiffsAgentBusy = computed(
+  () => Boolean(props.spiffsAgentStatus?.busy || props.spiffsAgentStatus?.uploading)
+);
+const spiffsAgentRunning = computed(() => Boolean(props.spiffsAgentStatus?.running));
+const spiffsAgentFiles = computed(() =>
+  Array.isArray(props.spiffsAgentStatus?.files) ? props.spiffsAgentStatus.files : []
+);
+const spiffsAgentStatusMessage = computed(() => {
+  const message = props.spiffsAgentStatus?.status || '';
+  if (!message) {
+    return '';
+  }
+  return message === spiffsAgentSummary.value ? '' : message;
+});
+const spiffsAgentError = computed(() => props.spiffsAgentStatus?.error || '');
 const spiffsAgentSummary = computed(() => {
   const status = props.spiffsAgentStatus || {};
-  if (status.loading) return 'Loading stub…';
+  if (status.loading) return 'Loading stub...';
+  if (status.uploading) return 'Uploading stub to device...';
+  if (status.busy && status.running) return 'Agent is busy processing a command...';
   if (status.error) return `Error: ${status.error}`;
+  if (status.running) return 'Agent running on device.';
   if (status.loaded) {
     const size = status.size ? status.size.toLocaleString() : 'unknown';
-    return `Loaded (${size} bytes). Ready for upload.`;
+    return `Stub cached (${size} bytes). Ready to upload.`;
   }
   return 'Stub not loaded yet.';
 });
+const spiffsUploadFile = ref(null);
+const spiffsUploadName = ref('');
+const canUploadToSpiffs = computed(
+  () => spiffsAgentRunning.value && !spiffsAgentBusy.value && Boolean(spiffsUploadFile.value)
+);
+
+watch(
+  () => Boolean(props.spiffsAgentStatus?.running),
+  (running, previous) => {
+    if (running && !previous) {
+      emit('spiffs-list');
+    }
+    if (!running) {
+      spiffsUploadFile.value = null;
+      spiffsUploadName.value = '';
+    }
+  }
+);
+
+function handleSpiffsFileInput(value) {
+  const file = Array.isArray(value) ? value[0] : value;
+  spiffsUploadFile.value = file || null;
+  spiffsUploadName.value = file?.name || '';
+}
+
+function handleSpiffsUpload() {
+  const file = spiffsUploadFile.value;
+  if (!file) {
+    return;
+  }
+  const desiredName = spiffsUploadName.value?.trim() || file.name;
+  emit('spiffs-upload', {
+    file,
+    name: desiredName,
+  });
+}
+
+function formatSpiffsFileSize(size) {
+  if (!Number.isFinite(size) || size < 0) {
+    return 'n/a';
+  }
+  if (size < 1024) {
+    return `${size} B`;
+  }
+  const units = ['KB', 'MB', 'GB'];
+  let value = size / 1024;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  const precision = value >= 10 ? 1 : 2;
+  return `${value.toFixed(precision)} ${units[unitIndex]}`;
+}
 
 function handleIntegrityPartitionSelect(value) {
   emit('update:integrityPartition', value);
@@ -829,7 +1050,46 @@ function handleRegisterSelect(value) {
 }
 
 .spiffs-agent__status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   font-size: 0.9rem;
   color: color-mix(in srgb, var(--v-theme-on-surface) 80%, transparent);
+}
+
+.spiffs-agent__actions {
+  gap: 10px;
+}
+
+.spiffs-agent__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.spiffs-agent__upload {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.spiffs-agent__table code {
+  font-size: 0.85rem;
+}
+
+.spiffs-agent__actions-col {
+  width: 180px;
+}
+
+.spiffs-agent__row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.spiffs-agent__empty {
+  font-size: 0.9rem;
+  color: color-mix(in srgb, var(--v-theme-on-surface) 65%, transparent);
 }
 </style>
