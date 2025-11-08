@@ -414,19 +414,19 @@
           </v-card>
         </v-dialog>
 
-        <v-dialog :model-value="spiffsUploadErrorDialog.visible" max-width="480"
-          @update:model-value="value => { if (!value) spiffsUploadErrorDialog.visible = false; }">
+        <v-dialog :model-value="uploadErrorDialog.visible" max-width="480"
+          @update:model-value="value => { if (!value) uploadErrorDialog.visible = false; }">
           <v-card>
             <v-card-title class="text-h6">
               <v-icon start color="error">mdi-alert-circle</v-icon>
               File too large
             </v-card-title>
             <v-card-text class="text-body-2">
-              {{ spiffsUploadErrorDialog.message || 'Not enough SPIFFS space to store this file.' }}
+              {{ uploadErrorDialog.message || 'Not enough filesystem space to store this file.' }}
             </v-card-text>
             <v-card-actions>
               <v-spacer />
-              <v-btn color="primary" variant="text" @click="spiffsUploadErrorDialog.visible = false">
+              <v-btn color="primary" variant="text" @click="uploadErrorDialog.visible = false">
                 Close
               </v-btn>
             </v-card-actions>
@@ -1103,6 +1103,7 @@ function handleLittlefsUploadSelection(file) {
     littlefsState.uploadBlocked = true;
     littlefsState.uploadBlockedReason = message;
     littlefsState.status = message;
+    showUploadError(message);
     return;
   }
   littlefsState.uploadBlocked = false;
@@ -1117,6 +1118,9 @@ async function handleLittlefsUpload({ file }) {
   }
   if (littlefsState.uploadBlocked) {
     littlefsState.status = littlefsState.uploadBlockedReason || 'Resolve blocked upload before continuing.';
+    if (littlefsState.uploadBlockedReason) {
+      showUploadError(littlefsState.uploadBlockedReason);
+    }
     return;
   }
   if (!file) {
@@ -1478,8 +1482,8 @@ function resetSpiffsState() {
     freeBytes: 0,
   };
   closeSpiffsViewer();
-  spiffsUploadErrorDialog.visible = false;
-  spiffsUploadErrorDialog.message = '';
+  uploadErrorDialog.visible = false;
+  uploadErrorDialog.message = '';
   spiffsState.uploadBlocked = false;
   spiffsState.uploadBlockedReason = '';
 }
@@ -1818,8 +1822,7 @@ function handleSpiffsUploadSelection(file) {
     const message = 'Not enough SPIFFS space for this file. Delete files or format the partition, then try again.';
     spiffsState.uploadBlocked = true;
     spiffsState.uploadBlockedReason = message;
-    spiffsUploadErrorDialog.message = message;
-    spiffsUploadErrorDialog.visible = true;
+    showUploadError(message);
     return;
   }
   spiffsState.uploadBlocked = false;
@@ -1839,6 +1842,11 @@ function resetViewerMedia() {
   }
   spiffsViewerDialog.imageUrl = '';
   spiffsViewerDialog.audioUrl = '';
+}
+
+function showUploadError(message) {
+  uploadErrorDialog.message = message || 'Not enough filesystem space to store this file.';
+  uploadErrorDialog.visible = true;
 }
 
 async function handleSpiffsView(name) {
@@ -1918,8 +1926,7 @@ async function handleSpiffsUpload({ file }) {
   if (spiffsState.uploadBlocked) {
     spiffsState.status = spiffsState.uploadBlockedReason || 'Resolve blocked upload before continuing.';
     if (spiffsState.uploadBlockedReason) {
-      spiffsUploadErrorDialog.message = spiffsState.uploadBlockedReason;
-      spiffsUploadErrorDialog.visible = true;
+      showUploadError(spiffsState.uploadBlockedReason);
     }
     return;
   }
@@ -1951,8 +1958,7 @@ async function handleSpiffsUpload({ file }) {
       spiffsState.error = friendly;
     }
     if (isSpaceError) {
-      spiffsUploadErrorDialog.message = friendly;
-      spiffsUploadErrorDialog.visible = true;
+      showUploadError(friendly);
     }
   } finally {
     spiffsState.busy = false;
@@ -2315,7 +2321,7 @@ const spiffsViewerDialog = reactive({
   audioUrl: '',
   source: 'spiffs',
 });
-const spiffsUploadErrorDialog = reactive({
+const uploadErrorDialog = reactive({
   visible: false,
   message: '',
 });
