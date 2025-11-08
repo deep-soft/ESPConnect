@@ -947,10 +947,12 @@ async function handleSpiffsBackup() {
   spiffsBackupDialog.value = 0;
   spiffsBackupDialog.label = 'Preparing backup...';
   try {
-    const label = sanitizeFileName(`${partition.label || 'spiffs'}_${partition.offset.toString(16)}`, 'spiffs');
+    const baseLabel = `${partition.label || 'spiffs'}_${partition.offset.toString(16)}`;
+    const safeBase = sanitizeFileName(baseLabel, 'spiffs');
+    const stampedName = `${safeBase}_${formatBackupTimestamp()}.bin`;
     await downloadFlashRegion(partition.offset, partition.size, {
       label: `${partition.label} SPIFFS`,
-      fileName: `${label}.bin`,
+      fileName: stampedName,
       suppressStatus: true,
       onProgress: progress => {
         spiffsBackupDialog.value = progress.value ?? 0;
@@ -3488,6 +3490,14 @@ function sanitizeFileName(name, fallback) {
     .replace(/_+/g, '_')
     .replace(/^_+|_+$/g, '')
     .slice(0, 120);
+}
+
+function formatBackupTimestamp(date = new Date()) {
+  const pad = value => String(value).padStart(2, '0');
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}_` +
+    `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`
+  );
 }
 
 async function downloadFlashRegion(offset, length, options = {}) {
