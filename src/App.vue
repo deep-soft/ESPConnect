@@ -794,6 +794,29 @@ function normalizeLittlefsEntries(entries) {
     .filter(file => file.name);
 }
 
+function isLittlefsUnformattedError(error) {
+  if (!error) {
+    return false;
+  }
+  if (typeof error.code === 'number' && error.code === -84) {
+    return true;
+  }
+  const message = String(error?.message ?? '').toLowerCase();
+  return message.includes('failed to initialize littlefs from image') || message.includes('corrupted dir pair');
+}
+
+function isBlankLittlefsImage(image) {
+  if (!(image instanceof Uint8Array) || !image.length) {
+    return true;
+  }
+  for (let index = 0; index < image.length; index += 1) {
+    if (image[index] !== 0xff) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function hasLittlefsBackup() {
   return Boolean(littlefsState.backupDone || littlefsState.sessionBackupDone);
 }
@@ -837,6 +860,7 @@ async function loadLittlefsPartition(partition) {
   littlefsState.status = `Reading LittleFS @ 0x${partition.offset.toString(16).toUpperCase()}...`;
   littlefsLoadingDialog.visible = true;
   littlefsLoadingDialog.label = `Reading ${partition.label || 'LittleFS'}...`;
+  const attemptedConfigs = [];
   try {
     await releaseTransportReader();
     const image = await loader.value.readFlash(partition.offset, partition.size);
@@ -846,6 +870,8 @@ async function loadLittlefsPartition(partition) {
     if (!createLittleFSFromImage) {
       throw new Error('LittleFS module is missing createLittleFSFromImage(). Update the WASM bundle.');
     }
+    const imageIsBlank = isBlankLittlefsImage(image);
+    const createLittleFS = typeof module.createLittleFS === 'function' ? module.createLittleFS : null;
     let client = null;
     let lastError = null;
     for (const candidateSize of LITTLEFS_BLOCK_SIZE_CANDIDATES) {
@@ -854,6 +880,7 @@ async function loadLittlefsPartition(partition) {
       }
       try {
         const blockCount = partition.size / candidateSize;
+        attemptedConfigs.push({ blockSize: candidateSize, blockCount });
         client = await createLittleFSFromImage(image, {
           blockSize: candidateSize,
           blockCount,
@@ -866,6 +893,32 @@ async function loadLittlefsPartition(partition) {
       }
     }
     if (!client) {
+      if (createLittleFS && attemptedConfigs.length && (imageIsBlank || isLittlefsUnformattedError(lastError))) {
+        try {
+          const fallbackConfig = attemptedConfigs[0];
+          client = await createLittleFS({
+            blockSize: fallbackConfig.blockSize,
+            blockCount: fallbackConfig.blockCount,
+            formatOnInit: true,
+          });
+          littlefsState.blockSize = fallbackConfig.blockSize;
+          littlefsState.blockCount = fallbackConfig.blockCount;
+          littlefsState.client = client;
+          littlefsState.files = [];
+          littlefsState.baselineFiles = [];
+          littlefsState.dirty = false;
+          littlefsState.readOnly = false;
+          littlefsState.readOnlyReason = '';
+          littlefsState.error = null;
+          updateLittlefsUsage(partition);
+          littlefsState.status =
+            'LittleFS partition appears blank. Download a backup, click Format, then Save to Flash to initialize it.';
+          appendLog('LittleFS partition appears blank/unformatted. Format then save to persist.', '[warn]');
+          return;
+        } catch (fallbackError) {
+          lastError = fallbackError;
+        }
+      }
       littlefsState.client = null;
       littlefsState.files = [];
       littlefsState.baselineFiles = [];
