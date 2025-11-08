@@ -485,7 +485,9 @@ watch(
   () => props.uploadBlocked,
   blocked => {
     if (blocked) {
-      dropQueue.value = [];
+      if (autoUploadPending.value) {
+        uploadFile.value = null;
+      }
       autoUploadPending.value = false;
     } else {
       scheduleNextDropUpload();
