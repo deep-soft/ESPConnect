@@ -512,7 +512,12 @@ const SPIFFS_VIEWER_MAX_BYTES = 2 * 1024 * 1024; // 2 MB previews
 const SPIFFS_VIEWER_DECODER = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true });
 const LITTLEFS_DEFAULT_BLOCK_SIZE = 4096;
 const LITTLEFS_BLOCK_SIZE_CANDIDATES = [4096, 2048, 1024, 512];
-const LITTLEFS_WASM_ENTRY = '/wasm/littlefs/index.js';
+const APP_BASE_URL = (import.meta.env?.BASE_URL ?? '/').replace(/\/+$/, '/') || '/';
+const LITTLEFS_WASM_ENTRY = `${APP_BASE_URL}wasm/littlefs/index.js`;
+const LITTLEFS_MODULE_CACHE_KEY =
+  import.meta.env?.DEV ?
+    `dev-${Date.now().toString(36)}` :
+    APP_VERSION;
 
 const PACKAGE_LABELS = {
   ESP32: pkgVersion =>
@@ -757,14 +762,24 @@ function sortFacts(facts) {
 
 async function loadLittlefsModule() {
   if (!littlefsModulePromise) {
+    const moduleUrl = resolveLittlefsModuleUrl();
     littlefsModulePromise = import(
-      /* @vite-ignore */ LITTLEFS_WASM_ENTRY
+      /* @vite-ignore */ moduleUrl
     ).catch(error => {
       littlefsModulePromise = null;
       throw error;
     });
   }
   return littlefsModulePromise;
+}
+
+function resolveLittlefsModuleUrl() {
+  if (typeof window !== 'undefined' && window.location) {
+    const url = new URL(LITTLEFS_WASM_ENTRY, window.location.origin);
+    url.searchParams.set('v', LITTLEFS_MODULE_CACHE_KEY);
+    return url.toString();
+  }
+  return `${LITTLEFS_WASM_ENTRY}?v=${LITTLEFS_MODULE_CACHE_KEY}`;
 }
 
 function normalizeLittlefsEntries(entries) {

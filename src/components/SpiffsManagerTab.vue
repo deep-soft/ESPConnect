@@ -381,6 +381,15 @@ const fileSearch = ref('');
 const filesPerPage = ref(10);
 const filesPage = ref(1);
 const fileTypeFilter = ref('all');
+const fsLabel = computed(() => (props.fsLabel && props.fsLabel.trim()) || 'SPIFFS');
+const partitionHeading = computed(() => props.partitionTitle?.trim() || `${fsLabel.value} Partition`);
+const emptyMessage = computed(
+  () => props.emptyStateMessage?.trim() || `No files detected. Upload or restore a ${fsLabel.value} image to begin.`,
+);
+const readOnlyMessage = computed(() => {
+  const detail = props.readOnlyReason?.trim();
+  return `${fsLabel.value} is in read-only mode. ${detail || 'Changes cannot be saved.'}`;
+});
 const usagePercent = computed(() => {
   if (!props.usage || !props.usage.capacityBytes) {
     return 0;
@@ -750,12 +759,3 @@ function previewLabel(name) {
   text-transform: none;
 }
 </style>
-const fsLabel = computed(() => (props.fsLabel && props.fsLabel.trim()) || 'SPIFFS');
-const partitionHeading = computed(() => props.partitionTitle?.trim() || `${fsLabel.value} Partition`);
-const emptyMessage = computed(
-  () => props.emptyStateMessage?.trim() || `No files detected. Upload or restore a ${fsLabel.value} image to begin.`,
-);
-const readOnlyMessage = computed(() => {
-  const detail = props.readOnlyReason?.trim();
-  return `${fsLabel.value} is in read-only mode. ${detail || 'Changes cannot be saved.'}`;
-});
