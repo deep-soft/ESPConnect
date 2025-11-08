@@ -179,7 +179,18 @@
               clearable
               hide-details
               prepend-inner-icon="mdi-magnify"
-              class="spiffs-table__filter"
+              class="spiffs-table__filter spiffs-table__filter--search"
+            />
+            <v-select
+              v-model="fileTypeFilter"
+              :items="fileFilterOptions"
+              item-title="label"
+              item-value="value"
+              label="File type"
+              density="comfortable"
+              hide-details
+              variant="outlined"
+              class="spiffs-table__filter spiffs-table__filter--type"
             />
             <v-chip size="small" variant="tonal" color="primary">
               {{ filteredCountLabel }}
@@ -318,6 +329,16 @@ const fileTableHeaders = Object.freeze([
   { title: 'Actions', key: 'actions', sortable: false, align: 'start' },
 ]);
 const filesPerPageOptions = Object.freeze([10, 25, 50, { value: -1, title: 'All' }]);
+const FALLBACK_TEXT_EXT = ['txt', 'log', 'json', 'csv', 'ini', 'cfg', 'conf', 'htm', 'html', 'md', 'xml'];
+const FALLBACK_IMAGE_EXT = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'svg'];
+const FALLBACK_AUDIO_EXT = ['mp3', 'wav', 'ogg', 'oga', 'opus', 'm4a', 'aac', 'flac', 'weba', 'webm'];
+const FILE_CATEGORY_LABELS = {
+  all: 'All types',
+  text: 'Text',
+  image: 'Images',
+  audio: 'Audio',
+  other: 'Other',
+};
 
 const emit = defineEmits([
   'select-partition',
@@ -338,6 +359,7 @@ const restoreInput = ref(null);
 const fileSearch = ref('');
 const filesPerPage = ref(10);
 const filesPage = ref(1);
+const fileTypeFilter = ref('all');
 const usagePercent = computed(() => {
   if (!props.usage || !props.usage.capacityBytes) {
     return 0;
@@ -350,12 +372,43 @@ const usagePercent = computed(() => {
 });
 const dragActive = ref(false);
 const autoUploadPending = ref(false);
+const fileFilterOptions = computed(() => {
+  const counts = props.files.reduce((acc, file) => {
+    const category = getFileCategory(file?.name);
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  }, {});
+  const options = [
+    {
+      value: 'all',
+      label: `${FILE_CATEGORY_LABELS.all} (${props.files.length})`,
+    },
+  ];
+  for (const [key, label] of Object.entries(FILE_CATEGORY_LABELS)) {
+    if (key === 'all') continue;
+    if (counts[key]) {
+      options.push({
+        value: key,
+        label: `${label} (${counts[key]})`,
+      });
+    }
+  }
+  return options;
+});
+
 const filteredFiles = computed(() => {
   const query = (fileSearch.value || '').trim().toLowerCase();
-  if (!query) {
-    return props.files;
-  }
-  return props.files.filter(file => file?.name?.toLowerCase().includes(query));
+  const typeFilter = fileTypeFilter.value;
+  return props.files.filter(file => {
+    const name = file?.name || '';
+    if (typeFilter !== 'all' && getFileCategory(name) !== typeFilter) {
+      return false;
+    }
+    if (!query) {
+      return true;
+    }
+    return name.toLowerCase().includes(query);
+  });
 });
 const filteredCountLabel = computed(() => {
   const total = props.files.length;
@@ -401,8 +454,15 @@ watch(
   },
 );
 
-watch([fileSearch, () => props.files.length], () => {
+watch([fileSearch, fileTypeFilter, () => props.files.length], () => {
   filesPage.value = 1;
+});
+
+watch(fileFilterOptions, options => {
+  const values = options.map(option => option.value);
+  if (!values.includes(fileTypeFilter.value)) {
+    fileTypeFilter.value = 'all';
+  }
 });
 
 function submitUpload(auto = false) {
@@ -502,6 +562,29 @@ function getPreviewInfo(name) {
   return null;
 }
 
+function normalizeExtension(name = '') {
+  if (typeof name !== 'string') {
+    return '';
+  }
+  const idx = name.lastIndexOf('.');
+  if (idx === -1) {
+    return '';
+  }
+  return name.slice(idx + 1).toLowerCase();
+}
+
+function getFileCategory(name = '') {
+  const info = getPreviewInfo(name);
+  if (info?.mode === 'text') return 'text';
+  if (info?.mode === 'image') return 'image';
+  if (info?.mode === 'audio') return 'audio';
+  const ext = normalizeExtension(name);
+  if (FALLBACK_TEXT_EXT.includes(ext)) return 'text';
+  if (FALLBACK_IMAGE_EXT.includes(ext)) return 'image';
+  if (FALLBACK_AUDIO_EXT.includes(ext)) return 'audio';
+  return 'other';
+}
+
 function isViewable(name) {
   return Boolean(getPreviewInfo(name));
 }
@@ -589,11 +672,18 @@ function previewLabel(name) {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .spiffs-table__filter {
   flex: 1;
   max-width: 360px;
+}
+
+.spiffs-table__filter--type {
+  flex: 0 0 auto;
+  min-width: 180px;
+  max-width: 220px;
 }
 
 .spiffs-dropzone {
