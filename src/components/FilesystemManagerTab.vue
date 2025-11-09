@@ -67,7 +67,7 @@
         <div v-if="usage?.capacityBytes" class="filesystem-usage">
           <div class="">
             <span>Used {{ usagePercent }}% ({{ formatSize(usage.usedBytes) }} / {{ formatSize(usage.capacityBytes)
-            }})</span>
+              }})</span>
             <span></span>
           </div>
           <v-progress-linear :model-value="usagePercent" height="15" rounded color="primary" />
@@ -104,45 +104,48 @@
         <v-alert v-if="!files.length" type="info" variant="tonal" density="comfortable" border="start" class="mt-4">
           {{ emptyMessage }}
         </v-alert>
-        <template v-else>
-          <div class="filesystem-table__toolbar mt-4">
-            <v-text-field v-model="fileSearch" label="Filter files" variant="outlined" density="comfortable" clearable
-              hide-details prepend-inner-icon="mdi-magnify"
-              class="filesystem-table__filter filesystem-table__filter--search" />
-            <v-select v-model="fileTypeFilter" :items="fileFilterOptions" item-title="label" item-value="value"
-              label="File type" density="comfortable" hide-details variant="outlined"
-              class="filesystem-table__filter filesystem-table__filter--type" />
-            <v-chip size="small" variant="tonal" color="primary">
-              {{ filteredCountLabel }}
-            </v-chip>
-          </div>
-          <v-data-table :headers="fileTableHeaders" :items="filteredFiles" item-key="name"
-            v-model:items-per-page="filesPerPage" v-model:page="filesPage" :items-per-page-options="filesPerPageOptions"
-            density="compact" class="filesystem-table mt-4">
-            <template #item.name="{ item }">
-              <code>{{ unwrapItem(item).name }}</code>
-            </template>
-            <template #item.size="{ item }">
-              {{ formatSize(unwrapItem(item).size) }}
-            </template>
-            <template #item.actions="{ item }">
-              <div class="d-flex ga-2 justify-end">
-                <v-icon size="small" variant="text" color="info" 
-                  v-if="enablePreview && isViewable(unwrapItem(item).name)"
-                  :disabled="loading || busy || saving || readOnly" :icon="previewIcon(unwrapItem(item).name)"
-                  :title="previewLabel(unwrapItem(item).name)" :aria-label="previewLabel(unwrapItem(item).name)"
-                  @click="emit('view-file', unwrapItem(item).name)" />
-                <v-icon size="small" variant="text" color="primary" v-if="enableDownload"
-                  :disabled="loading || busy || saving || readOnly" icon="mdi-download"
-                  :title="`Download ${unwrapItem(item).name}`" :aria-label="`Download ${unwrapItem(item).name}`"
-                  @click="emit('download-file', unwrapItem(item).name)" />
-                <v-icon size="small" variant="text" color="error" :disabled="readOnly || loading || busy || saving"
-                  icon="mdi-delete" :title="`Delete ${unwrapItem(item).name}`"
-                  :aria-label="`Delete ${unwrapItem(item).name}`" @click="emit('delete-file', unwrapItem(item).name)" />
-              </div>
-            </template>
-          </v-data-table>
-        </template>
+        <div v-if="files.length" class="filesystem-table__toolbar mt-4">
+          <v-text-field v-model="fileSearch" label="Filter files" variant="outlined" density="comfortable" clearable
+            hide-details prepend-inner-icon="mdi-magnify"
+            class="filesystem-table__filter filesystem-table__filter--search" />
+          <v-select v-model="fileTypeFilter" :items="fileFilterOptions" item-title="label" item-value="value"
+            label="File type" density="comfortable" hide-details variant="outlined"
+            class="filesystem-table__filter filesystem-table__filter--type" />
+          <v-chip size="small" variant="tonal" color="primary">
+            {{ filteredCountLabel }}
+          </v-chip>
+        </div>
+        <v-data-table :headers="fileTableHeaders" :items="filteredFiles" item-key="name"
+          v-model:items-per-page="filesPerPage" v-model:page="filesPage" :items-per-page-options="filesPerPageOptions"
+          density="compact" class="filesystem-table mt-4">
+          <template #item.name="{ item }">
+            <code>{{ unwrapItem(item).name }}</code>
+          </template>
+          <template #item.size="{ item }">
+            {{ formatSize(unwrapItem(item).size) }}
+          </template>
+          <template #item.actions="{ item }">
+            <div class="d-flex ga-2 justify-end">
+              <v-icon size="small" variant="text" color="info" v-if="enablePreview && isViewable(unwrapItem(item).name)"
+                :disabled="loading || busy || saving || readOnly" :icon="previewIcon(unwrapItem(item).name)"
+                :title="previewLabel(unwrapItem(item).name)" :aria-label="previewLabel(unwrapItem(item).name)"
+                @click="emit('view-file', unwrapItem(item).name)" />
+              <v-icon size="small" variant="text" color="primary" v-if="enableDownload"
+                :disabled="loading || busy || saving || readOnly" icon="mdi-download"
+                :title="`Download ${unwrapItem(item).name}`" :aria-label="`Download ${unwrapItem(item).name}`"
+                @click="emit('download-file', unwrapItem(item).name)" />
+              <v-icon size="small" variant="text" color="error" :disabled="readOnly || loading || busy || saving"
+                icon="mdi-delete" :title="`Delete ${unwrapItem(item).name}`" :aria-label="`Delete ${unwrapItem(item).name}`"
+                @click="emit('delete-file', unwrapItem(item).name)" />
+            </div>
+          </template>
+          <template #no-data>
+            <div class="filesystem-table__empty">
+              <div v-if="files.length">No files match the current filters.</div>
+              <div v-else>{{ emptyMessage }}</div>
+            </div>
+          </template>
+        </v-data-table>
       </v-card-text>
     </v-card>
 
@@ -637,6 +640,12 @@ function previewLabel(name) {
 .filesystem-table__actions {
   display: flex;
   gap: 4px;
+}
+
+.filesystem-table__empty {
+  padding: 32px 0;
+  text-align: center;
+  color: color-mix(in srgb, var(--v-theme-on-surface) 70%, transparent);
 }
 
 .filesystem-dropzone {
