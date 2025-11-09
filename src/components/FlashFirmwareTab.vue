@@ -8,93 +8,7 @@
   >
     Firmware tools are intended for advanced users. Writing or erasing flash can permanently remove data or render the device unbootable. Double-check settings before proceeding.
   </v-alert>
-
   <v-card class="tools-card mb-6" variant="tonal">
-    <v-card-title class="tools-card__title">
-      <v-icon size="18" class="me-2">mdi-lightning-bolt</v-icon>
-      Flash Firmware
-    </v-card-title>
-    <v-card-text class="tools-card__body">
-      <v-row class="mb-2" dense>
-        <v-col cols="12" md="8">
-          <v-file-input
-            label="Firmware binary (.bin)"
-            prepend-icon="mdi-file-upload"
-            accept=".bin"
-            density="comfortable"
-            :disabled="busy || maintenanceBusy"
-            @update:model-value="value => emit('firmware-input', value)"
-          />
-        </v-col>
-        <v-col cols="12" md="4">
-          <v-text-field
-            :model-value="flashOffset"
-            label="Flash offset"
-            placeholder="0x0"
-            density="comfortable"
-            :disabled="busy || maintenanceBusy"
-            @update:model-value="value => emit('update:flashOffset', value)"
-          />
-        </v-col>
-        <v-col cols="12" md="4">
-          <v-select
-            :model-value="selectedPreset"
-            :items="offsetPresets"
-            label="Recommended offsets"
-            item-title="label"
-            item-value="value"
-            clearable
-            density="comfortable"
-            :disabled="busy || maintenanceBusy"
-            @update:model-value="value => handlePresetChange(value)"
-          >
-            <template #item="{ props, item }">
-              <v-list-item v-bind="props" class="partition-select__item">
-                <template #prepend>
-                  <span class="partition-select__swatch" :style="{ backgroundColor: resolvePartitionColor(item?.raw) }" />
-                </template>
-                <v-list-item-title>{{ item.raw.label }}</v-list-item-title>
-              </v-list-item>
-            </template>
-            <template #selection="{ item }">
-              <span v-if="item" class="partition-select__selection">
-                <span class="partition-select__swatch" :style="{ backgroundColor: resolvePartitionColor(item.raw) }" />
-                <span>{{ item.raw.label }}</span>
-              </span>
-            </template>
-          </v-select>
-        </v-col>
-      </v-row>
-
-  <v-checkbox
-    :model-value="eraseFlash"
-    label="Erase entire flash before writing"
-    density="comfortable"
-    hide-details
-    :disabled="busy || maintenanceBusy"
-    @update:model-value="value => emit('update:eraseFlash', value)"
-  />
-
-      <p class="flash-tools__hint text-medium-emphasis">
-        Flashing runs at 921,600&nbsp;bps by default. Drop the baud if the device struggles to sync.
-        The serial monitor automatically switches to 115,200&nbsp;bps for stability.
-      </p>
-
-      <v-btn
-        color="primary"
-        size="large"
-        block
-        class="mt-2"
-        :disabled="!canFlash || busy || maintenanceBusy"
-        @click="emit('flash')"
-      >
-        <v-icon start>mdi-lightning-bolt</v-icon>
-        Flash Firmware
-      </v-btn>
-    </v-card-text>
-  </v-card>
-
-  <v-card class="tools-card mt-6" variant="tonal">
     <v-card-title class="tools-card__title">
       <v-icon size="18" class="me-2">mdi-archive-arrow-down</v-icon>
       Flash Backup &amp; Erase
@@ -212,6 +126,92 @@
   </v-alert>
     </v-card-text>
   </v-card>
+  <v-card class="tools-card" variant="tonal">
+    <v-card-title class="tools-card__title">
+      <v-icon size="18" class="me-2">mdi-lightning-bolt</v-icon>
+      Flash Firmware
+    </v-card-title>
+    <v-card-text class="tools-card__body">
+      <v-row class="mb-2" dense>
+        <v-col cols="12" md="8">
+          <v-file-input
+            label="Firmware binary (.bin)"
+            prepend-icon="mdi-file-upload"
+            accept=".bin"
+            density="comfortable"
+            :disabled="busy || maintenanceBusy"
+            @update:model-value="value => emit('firmware-input', value)"
+          />
+        </v-col>
+        <v-col cols="12" md="4">
+          <v-text-field
+            :model-value="flashOffset"
+            label="Flash offset"
+            placeholder="0x0"
+            density="comfortable"
+            :disabled="busy || maintenanceBusy"
+            @update:model-value="value => emit('update:flashOffset', value)"
+          />
+        </v-col>
+        <v-col cols="12" md="4">
+          <v-select
+            :model-value="selectedPreset"
+            :items="offsetPresets"
+            label="Recommended offsets"
+            item-title="label"
+            item-value="value"
+            clearable
+            density="comfortable"
+            :disabled="busy || maintenanceBusy"
+            @update:model-value="value => handlePresetChange(value)"
+          >
+            <template #item="{ props, item }">
+              <v-list-item v-bind="props" class="partition-select__item">
+                <template #prepend>
+                  <span class="partition-select__swatch" :style="{ backgroundColor: resolvePartitionColor(item?.raw) }" />
+                </template>
+                <v-list-item-title>{{ item.raw.label }}</v-list-item-title>
+              </v-list-item>
+            </template>
+            <template #selection="{ item }">
+              <span v-if="item" class="partition-select__selection">
+                <span class="partition-select__swatch" :style="{ backgroundColor: resolvePartitionColor(item.raw) }" />
+                <span>{{ item.raw.label }}</span>
+              </span>
+            </template>
+          </v-select>
+        </v-col>
+      </v-row>
+
+  <v-checkbox
+    :model-value="eraseFlash"
+    label="Erase entire flash before writing"
+    density="comfortable"
+    hide-details
+    :disabled="busy || maintenanceBusy"
+    @update:model-value="value => emit('update:eraseFlash', value)"
+  />
+
+      <p class="flash-tools__hint text-medium-emphasis">
+        Flashing runs at 921,600&nbsp;bps by default. Drop the baud if the device struggles to sync.
+        The serial monitor automatically switches to 115,200&nbsp;bps for stability.
+      </p>
+
+      <v-btn
+        color="primary"
+        size="large"
+        block
+        class="mt-2"
+        :disabled="!canFlash || busy || maintenanceBusy"
+        @click="emit('flash')"
+      >
+        <v-icon start>mdi-lightning-bolt</v-icon>
+        Flash Firmware
+      </v-btn>
+    </v-card-text>
+  </v-card>
+
+
 
   <v-card class="tools-card mt-6" variant="tonal">
     <v-card-title class="tools-card__title">
