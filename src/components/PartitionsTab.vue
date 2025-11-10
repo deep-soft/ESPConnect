@@ -35,6 +35,17 @@
           </a>.
         </div>
       </v-alert>
+      <v-alert v-else type="info" variant="tonal" class="unused-alert">
+        Want to customize this layout? Watch the
+        <a href="https://youtu.be/EuHxodrye6E" target="_blank" rel="noopener noreferrer">
+          partition tutorial
+        </a>
+        or open the
+        <a href="https://thelastoutpostworkshop.github.io/microcontroller_devkit/esp32partitionbuilder/"
+          target="_blank" rel="noopener noreferrer">
+          ESP32 partition builder
+        </a>.
+      </v-alert>
       <div class="partition-map">
         <VTooltip v-for="segment in partitionSegments" :key="segment.key" location="top" :open-delay="120"
           transition="fade-transition">
