@@ -1,4 +1,4 @@
-[<img src="https://github.com/thelastoutpostworkshop/images/blob/main/Custom%20Partitions.png">](https://youtu.be/-nhDKzBxHiI)
+[<img src="https://github.com/thelastoutpostworkshop/images/blob/main/ESPConnect-github.png">](https://youtu.be/-nhDKzBxHiI)
 # ESPConnect
 
 ESPConnect is a browser-based control center for ESP32- and ESP8266-class boards. It runs entirely inside a modern Chromium browser so you can inspect hardware details, manage SPIFFS files, back up flash, and deploy firmware without installing desktop software.
