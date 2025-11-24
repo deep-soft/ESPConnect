@@ -563,7 +563,7 @@ import registerGuides from './data/register-guides.json';
 import { InMemorySpiffsClient } from './utils/spiffs/spiffsClient';
 
 const APP_NAME = 'ESPConnect';
-const APP_VERSION = '1.00';
+const APP_VERSION = '1.01';
 const APP_TAGLINE = 'Flash, back up, and troubleshoot your ESP32 straight from the browser.';
 
 const SUPPORTED_VENDORS = [
