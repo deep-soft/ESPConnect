@@ -5,21 +5,42 @@
         <v-icon class="me-2" size="20">mdi-monitor</v-icon>
         Session Log
       </div>
-      <v-btn
-        variant="text"
-        color="primary"
-        size="small"
-        prepend-icon="mdi-trash-can-outline"
-        :disabled="!logText"
-        @click="emit('clear-log')"
-      >
-        Clear
-      </v-btn>
+      <div class="session-log-actions">
+        <v-btn
+          variant="tonal"
+          color="primary"
+          size="small"
+          prepend-icon="mdi-content-copy"
+          :disabled="!logText || copying"
+          :loading="copying"
+          @click="copyLog"
+        >
+          Copy
+        </v-btn>
+        <v-btn
+          variant="text"
+          color="primary"
+          size="small"
+          prepend-icon="mdi-trash-can-outline"
+          :disabled="!logText"
+          @click="emit('clear-log')"
+        >
+          Clear
+        </v-btn>
+      </div>
     </v-card-title>
     <v-divider></v-divider>
     <v-card-text class="log-surface" ref="logSurface">
       <pre class="log-output">{{ logText || 'Logs will appear here once actions begin.' }}</pre>
     </v-card-text>
+    <v-snackbar
+      v-model="copyFeedback.visible"
+      :color="copyFeedback.color"
+      :timeout="2000"
+      location="bottom right"
+    >
+      {{ copyFeedback.message }}
+    </v-snackbar>
   </v-card>
 </template>
 
@@ -36,6 +57,12 @@ const props = defineProps({
 const emit = defineEmits(['clear-log']);
 
 const logSurface = ref(null);
+const copying = ref(false);
+const copyFeedback = ref({
+  visible: false,
+  message: '',
+  color: 'success',
+});
 
 function scrollToBottom() {
   nextTick(() => {
@@ -51,6 +78,46 @@ watch(
     scrollToBottom();
   }
 );
+
+async function copyLog() {
+  if (!props.logText || copying.value) {
+    return;
+  }
+
+  try {
+    copying.value = true;
+    const text = props.logText;
+    if (typeof navigator !== 'undefined' && navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+    } else if (typeof document !== 'undefined') {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    } else {
+      throw new Error('Clipboard unavailable');
+    }
+    copyFeedback.value = {
+      visible: true,
+      message: 'Session log copied to clipboard.',
+      color: 'success',
+    };
+  } catch (error) {
+    console.error('Failed to copy log', error);
+    copyFeedback.value = {
+      visible: true,
+      message: 'Unable to copy log. Please try again.',
+      color: 'error',
+    };
+  } finally {
+    copying.value = false;
+  }
+}
 
 defineExpose({
   scrollToBottom,
@@ -76,6 +143,12 @@ defineExpose({
   display: inline-flex;
   align-items: center;
   font-size: 0.95rem;
+}
+
+.session-log-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .log-surface {
