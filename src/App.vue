@@ -1158,6 +1158,9 @@ function handleLittlefsUploadSelection(file) {
 
 async function handleLittlefsUpload(payload) {
   const { file, path, isDir } = payload || {};
+  // reset block flags for a new upload attempt
+  littlefsState.uploadBlocked = false;
+  littlefsState.uploadBlockedReason = '';
   if (!littlefsState.client) return;
   if (littlefsState.readOnly) {
     littlefsState.status = littlefsState.readOnlyReason || 'LittleFS is read-only.';
@@ -1184,6 +1187,8 @@ async function handleLittlefsUpload(payload) {
     showUploadError(message);
     return;
   }
+  littlefsState.uploadBlocked = false;
+  littlefsState.uploadBlockedReason = '';
   if (!file) {
     if (isDir && path) {
       await handleLittlefsNewFolder(path);
