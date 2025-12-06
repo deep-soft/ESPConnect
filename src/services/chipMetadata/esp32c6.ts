@@ -13,7 +13,7 @@ type Loader = {
 };
 
 export async function readEsp32C6Metadata(loader: Loader) {
-  const mac = typeof loader.macAddr === 'function' ? safeMac(loader) : undefined;
+  const mac = typeof loader.macAddr === 'function' ?  safeMac(loader) : undefined;
   return {
     description: loader.chipName ?? CHIP_NAME,
     features: ['Wi-Fi', 'BLE', '802.15.4'],

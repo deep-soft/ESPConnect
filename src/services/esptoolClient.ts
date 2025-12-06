@@ -409,8 +409,7 @@ export function createEsptoolClient({
       await loader.initialize();
       const macAddress = formatMac(loader.macAddr());
 
-      console.log(loader.macAddr());
-      const chipName = loader.chipName ?? 'ESP';
+      const chipName = loader.chipName ?? 'ESP (Unknown)';
 
       status('Loading stub flasher...');
       const stub = await loader.runStub();
