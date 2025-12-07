@@ -41,6 +41,18 @@
         <v-select v-model="selectedBaud" :items="baudrateOptions" label="Baud rate" density="compact" variant="outlined"
           hide-details class="status-select"
           :disabled="busy || flashInProgress || maintenanceBusy || baudChangeBusy || monitorActive" />
+        <span v-if="higherBaudrateAvailable">
+
+          <v-tooltip text="A higher baudrate can be used"  location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-btn class="text-none" stacked v-bind="props">
+                <v-badge bordered color="success" dot>
+                  <v-icon>mdi-bell-outline</v-icon>
+                </v-badge>
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </span>
       </div>
       <v-spacer />
       <v-btn :title="`Switch to ${isDarkTheme ? 'light' : 'dark'} theme`" variant="text" icon size="small"
@@ -637,7 +649,8 @@ import {
   DEFAULT_FLASH_BAUD,
   DEFAULT_ROM_BAUD,
   MONITOR_BAUD,
-  SUPPORTED_VENDORS,
+  MAX_SUPPORTED_BAUDRATE,
+  SUPPORTED_BAUDRATES,
   TIMEOUT_CONNECT,
 } from './constants/serial';
 import {
@@ -3342,9 +3355,10 @@ const flashProgress = ref(0);
 const flashProgressDialog = reactive({ visible: false, value: 0, label: '' });
 const flashCancelRequested = ref(false);
 const selectedBaud = ref(String(DEFAULT_FLASH_BAUD));
-const baudrateOptions = ['115200', '230400', '460800', '921600', '1500000', '2000000'];
+const baudrateOptions = SUPPORTED_BAUDRATES;
 const flashOffset = ref('0x0');
 const eraseFlash = ref(false);
+const higherBaudrateAvailable = ref(false);
 const selectedPreset = ref(null);
 const selectedPartitionDownload = ref(null);
 const integrityPartition = ref(null);
@@ -5150,8 +5164,13 @@ async function connect() {
       queueMicrotask(() => {
         suspendBaudWatcher = previousSuspendState;
       });
-      showToast('Detected CH340 bridge; lowering baud to '+desiredBaud+' bps for stability.', { color: 'warning' });
-      appendLog('Detected CH340 bridge; lowering baud to '+desiredBaud+' bps.', '[ESPConnect-Debug]');
+      showToast('Detected CH340 bridge; lowering baud to ' + desiredBaud + ' bps for stability.', { color: 'warning' });
+      appendLog('Detected CH340 bridge; lowering baud to ' + desiredBaud + ' bps.', '[ESPConnect-Debug]');
+    } else {
+      // Determine if a higher baud rate is available
+      // if (lastFlashBaud.value < MAX_SUPPORTED_BAUDRATE) {
+      //   higherBaudrateAvailable.value = true;
+      // }
     }
 
     const esptool = createEsptoolClient({
