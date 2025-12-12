@@ -3205,6 +3205,10 @@ type ResetOptions = {
   silent?: boolean;
 };
 
+type StopMonitorOptions = {
+  closeConnection?: boolean;
+};
+
 // Write a filesystem image to flash with progress callbacks.
 async function writeFilesystemImage(partition: any, image: Uint8Array | ArrayBuffer, options: WriteFilesystemOptions = {}) {
   const { onProgress, label = 'filesystem', state, compress = true } = options;
@@ -5069,7 +5073,7 @@ async function startMonitor() {
 }
 
 // Stop the serial monitor and optionally disconnect from the device.
-async function stopMonitor(options = {}) {
+async function stopMonitor(options: StopMonitorOptions = {}) {
   if (!monitorActive.value) return;
   const { closeConnection = false } = options;
   monitorAbortController.value?.abort();
