@@ -2888,7 +2888,13 @@ function showUploadError(message) {
 }
 
 // Show a transient toast message.
-function showToast(message, options = {}) {
+type ToastOptions = {
+  color?: string;
+  timeout?: number;
+};
+
+// Show a transient toast message.
+function showToast(message: string, options: ToastOptions = {}) {
   toast.message = message;
   toast.color = options.color || 'warning';
   toast.timeout = options.timeout ?? 4000;
