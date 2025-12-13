@@ -93,7 +93,6 @@ export type CompatibleLoader = ESPLoader & {
   changeBaud: (baud?: number) => Promise<void>;
   readReg: (addr: number) => Promise<number>;
   writeReg: (addr: number, value: number, mask?: number, delayUs?: number) => Promise<void>;
-  ui8ToBstr: (data: Uint8Array) => string;
   writeFlash: (options: WriteFlashOptions) => Promise<void>;
   flashMd5sum: (addr: number, size: number) => Promise<string>;
   after: (mode?: string) => Promise<void>;
@@ -231,10 +230,6 @@ function createLogger(terminal: any, debugLogging: boolean): Logger {
   };
 }
 
-function ui8ToBstr(data: Uint8Array) {
-  return String.fromCharCode(...data);
-}
-
 function bstrToUi8(data: string) {
   const view = new Uint8Array(data.length);
   for (let i = 0; i < data.length; i += 1) {
@@ -269,8 +264,6 @@ function decorateLoader(loader: ESPLoader, setBusy: BusySetter): CompatibleLoade
       setBusy(false);
     }
   };
-
-  decorated.ui8ToBstr = (data: Uint8Array) => ui8ToBstr(data);
 
   const baseReadFlash = loader.readFlash.bind(loader);
   decorated.readFlash = async (...args: Parameters<ESPLoader['readFlash']>) =>
