@@ -13,3 +13,20 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 !public/wasm/README.md
+
+# Electron-Forge output
+out/
+.webpack/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
