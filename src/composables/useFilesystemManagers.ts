@@ -53,6 +53,9 @@ export function useSpiffsManager() {
   const spiffsLoadCancelRequested = ref(false);
   const spiffsState = reactive({
     selectedId: null as number | null,
+    lastReadOffset: null as number | null,
+    lastReadSize: 0,
+    lastReadImage: null as Uint8Array | null,
     files: [] as Array<{ name?: string; size?: number }>,
     status: 'Load a SPIFFS partition to begin.',
     loading: false,
@@ -107,6 +110,9 @@ export function useLittlefsManager(defaultBlockSize: number) {
   const littlefsLoadCancelRequested = ref(false);
   const littlefsState = reactive({
     selectedId: null as number | null,
+    lastReadOffset: null as number | null,
+    lastReadSize: 0,
+    lastReadImage: null as Uint8Array | null,
     client: null as LittlefsClient | null,
     files: [] as Array<{ name?: string; size?: number; path?: string; type?: string }>,
     allFiles: [] as Array<{ name?: string; size?: number; path?: string; type?: string }>,
@@ -153,6 +159,9 @@ export function useFatfsManager(defaultBlockSize: number) {
   const fatfsLoadCancelRequested = ref(false);
   const fatfsState = reactive({
     selectedId: null as number | null,
+    lastReadOffset: null as number | null,
+    lastReadSize: 0,
+    lastReadImage: null as Uint8Array | null,
     client: null as FatfsClient | null,
     files: [] as Array<{ name?: string; size?: number }>,
     status: 'Load a FATFS partition to begin.',
