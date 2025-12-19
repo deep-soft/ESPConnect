@@ -9,6 +9,10 @@ import * as directives from 'vuetify/directives';
 import '@mdi/font/css/materialdesignicons.css';
 import './style.css';
 
+// 国际化支持 - 只需这一行即可启用中英文切换
+import { initI18n } from './i18n/index.js';
+initI18n();
+
 const vuetify = createVuetify({
   components,
   directives,
