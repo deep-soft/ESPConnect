@@ -185,7 +185,7 @@
         </v-card-text>
       </v-card>
 
-      <v-expansion-panels variant="accordion">
+      <v-expansion-panels v-if="result.errors.length || result.warnings.length" variant="accordion">
         <v-expansion-panel>
           <v-expansion-panel-title>
             Warnings / Errors
@@ -211,10 +211,6 @@
               <ul class="nvs-inspector__list">
                 <li v-for="(line, idx) in result.warnings" :key="'w-' + idx"><code>{{ line }}</code></li>
               </ul>
-            </div>
-
-            <div v-if="!result.errors.length && !result.warnings.length" class="text-medium-emphasis">
-              No warnings or errors reported.
             </div>
           </v-expansion-panel-text>
         </v-expansion-panel>
