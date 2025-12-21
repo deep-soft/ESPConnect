@@ -684,28 +684,6 @@ let littlefsModulePromise = null;
 let fatfsModulePromise = null;
 const littlefsFormatDiskVersion = ref<((version: number) => string) | null>(null);
 
-// Sort device facts using the preferred display order, then fall back to name sorting.
-// function sortFacts(facts) {
-//   return [...facts].sort((a, b) => {
-//     const orderA = FACT_DISPLAY_ORDER.indexOf(a.label);
-//     const orderB = FACT_DISPLAY_ORDER.indexOf(b.label);
-//     const hasOrderA = orderA !== -1;
-//     const hasOrderB = orderB !== -1;
-
-//     if (hasOrderA && hasOrderB) {
-//       if (orderA !== orderB) {
-//         return orderA - orderB;
-//       }
-//       return a.label.localeCompare(b.label);
-//     }
-
-//     if (hasOrderA) return -1;
-//     if (hasOrderB) return 1;
-
-//     return a.label.localeCompare(b.label);
-//   });
-// }
-
 // Lazy-load and cache the LittleFS WASM module.
 async function loadLittlefsModule() {
   if (!littlefsModulePromise) {
