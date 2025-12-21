@@ -326,7 +326,7 @@ export function createEsptoolClient({
         securityInfo = await loader.getSecurityInfo();
         securityFacts = buildSecurityFacts(securityInfo, chipName);
       } catch (error) {
-        logger.error('Cannot read secutiry information');
+        logger.error('Cannot read security information');
       }
 
       const result: ConnectHandshakeResult = { chipName, macAddress, securityFacts,flashSize:loader.flashSize };
