@@ -683,6 +683,7 @@ import type { AppPartitionMetadata } from './types/app-partitions';
 import type { DeviceDetails } from './types/device-details';
 import type { FilePreviewInfo } from './types/filesystem';
 import type { LittlefsDiskVersionFormatter, LittlefsEntry, LittlefsEntryType, LittlefsUploadPayload } from './types/littlefs';
+import type { FormattedPartitionRow, PartitionSegment, UnusedFlashSummary } from './types/partitions';
 import type {
   AlertType,
   PartitionOptionValue,
@@ -4617,7 +4618,7 @@ const RESERVED_SEGMENTS = [
 
 const MIN_SEGMENT_PERCENT = 1; // ensure tiny partitions remain hoverable in the map
 
-const partitionSegments = computed(() => {
+const partitionSegments = computed<PartitionSegment[]>(() => {
   if (!connected.value) {
     return [];
   }
@@ -4848,7 +4849,7 @@ const totalUnusedFlashBytes = computed(() =>
     .reduce((sum, segment) => sum + (segment.size || 0), 0)
 );
 
-const unusedFlashSummary = computed(() => {
+const unusedFlashSummary = computed<UnusedFlashSummary | null>(() => {
   const bytes = totalUnusedFlashBytes.value;
   if (!bytes || bytes < UNUSED_FLASH_ALERT_THRESHOLD) {
     return null;
@@ -4860,7 +4861,7 @@ const unusedFlashSummary = computed(() => {
   };
 });
 
-const formattedPartitions = computed(() => {
+const formattedPartitions = computed<FormattedPartitionRow[]>(() => {
   const segmentByOffset = new Map();
   for (const segment of partitionSegments.value) {
     if (!segment.isUnused && !segment.isReserved) {
