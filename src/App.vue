@@ -685,6 +685,7 @@ import type { FilePreviewInfo } from './types/filesystem';
 import type { LittlefsDiskVersionFormatter, LittlefsEntry, LittlefsEntryType, LittlefsUploadPayload } from './types/littlefs';
 import type { FormattedPartitionRow, PartitionSegment, UnusedFlashSummary } from './types/partitions';
 import type { SerialMonitorError } from './types/serial-monitor';
+import type { SessionLogTabRef } from './types/session-log';
 import type {
   AlertType,
   PartitionOptionValue,
@@ -3802,7 +3803,7 @@ const chipDetails = ref<DeviceDetails | null>(null);
 const partitionFlashSizeLabel = computed(() => chipDetails.value?.flashSize ?? null);
 const partitionTable = ref([]);
 const activeTab = ref('info');
-const sessionLogRef = ref(null);
+const sessionLogRef = ref<SessionLogTabRef | null>(null);
 const navigationItems = computed(() => [
   { title: 'Device Info', value: 'info', icon: 'mdi-information-outline', disabled: false },
   { title: 'Partitions', value: 'partitions', icon: 'mdi-table', disabled: !connected.value },

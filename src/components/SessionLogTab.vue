@@ -44,31 +44,29 @@
   </v-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
+import type { SessionLogCopyFeedback, SessionLogTabEmits, SessionLogTabProps } from '../types/session-log';
 
-const props = defineProps({
-  logText: {
-    type: String,
-    default: '',
-  },
+const props = withDefaults(defineProps<SessionLogTabProps>(), {
+  logText: '',
 });
 
-const emit = defineEmits(['clear-log']);
+const emit = defineEmits<SessionLogTabEmits>();
 
-const logSurface = ref(null);
+const logSurface = ref<HTMLElement | null>(null);
 const copying = ref(false);
-const copyFeedback = ref({
+const copyFeedback = ref<SessionLogCopyFeedback>({
   visible: false,
   message: '',
   color: 'success',
 });
 
 function scrollToBottom() {
-  nextTick(() => {
-    if (logSurface.value) {
-      logSurface.value.scrollTop = logSurface.value.scrollHeight;
-    }
+  void nextTick(() => {
+    const el = logSurface.value;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   });
 }
 
@@ -79,14 +77,14 @@ watch(
   }
 );
 
-async function copyLog() {
-  if (!props.logText || copying.value) {
+async function copyLog(): Promise<void> {
+  const text = props.logText;
+  if (!text || copying.value) {
     return;
   }
 
   try {
     copying.value = true;
-    const text = props.logText;
     if (typeof navigator !== 'undefined' && navigator?.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
     } else if (typeof document !== 'undefined') {
@@ -107,7 +105,7 @@ async function copyLog() {
       message: 'Session log copied to clipboard.',
       color: 'success',
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to copy log', error);
     copyFeedback.value = {
       visible: true,
