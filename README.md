@@ -6,7 +6,21 @@
 
 ESPConnect is a browser-based control center for ESP32- and ESP8266-class boards. It runs entirely inside a modern Chromium browser so you can inspect hardware details, manage SPIFFS files, back up flash, and deploy firmware without installing desktop software. It is based on Jason2866's [WebSerial ESPTool](https://github.com/Jason2866/WebSerial_ESPTool/tree/development).
 - [Tutorial](https://youtu.be/-nhDKzBxHiI)
-- [Web application](https://thelastoutpostworkshop.github.io/microcontroller_devkit/espconnect/)
+
+## Stable vs Preview Builds
+
+ESPConnect is published in two variants:
+
+- **Stable (recommended)**  
+  👉 https://thelastoutpostworkshop.github.io/microcontroller_devkit/espconnect/  
+  This version is built from tagged releases and is intended for everyday use.
+
+- **Preview (development build)**  
+  👉 https://thelastoutpostworkshop.github.io/ESPConnect/preview/  
+  This version is automatically built from the `main` branch and may include new features, experiments, or breaking changes.
+
+> ⚠️ The preview build is provided for testing and feedback only.  
+> If you encounter issues, please report them along with whether they occurred on **stable** or **preview**.
 
 ## What You Need
 - Chrome, Edge, Brave, Arc, or another Chromium browser based on version 89 or newer.  
