@@ -710,7 +710,7 @@ import {
   SUPPORTED_BAUDRATES,
   TIMEOUT_CONNECT,
 } from './constants/usb';
-import { FACT_GROUP_CONFIG, FACT_ICONS } from './constants/deviceFacts';
+import { FACT_GROUP_CONFIG, FACT_ICONS, getFactLabelKey } from './constants/deviceFacts';
 import { findChipDocs } from './constants/chipDocsLinks';
 import { PWM_TABLE } from './utils/pwm-capabilities-table';
 import { parseNvsPartition, type NvsParseResult } from './lib/nvs/nvsParser';
@@ -2368,16 +2368,22 @@ function buildFactGroups(facts: DeviceFact[]): DeviceFactGroup[] {
   const assigned = new Set<string>();
 
   for (const config of FACT_GROUP_CONFIG) {
+    const labelMap = new Map(config.labels.map(entry => [entry.label, entry.key]));
     const items = facts.filter(fact => {
       if (assigned.has(fact.label)) return false;
-      return config.labels.includes(fact.label);
+      return labelMap.has(fact.label);
     });
     if (items.length) {
       items.forEach(item => assigned.add(item.label));
+      const enhancedItems = items.map(fact => ({
+        ...fact,
+        translationKey: fact.translationKey ?? labelMap.get(fact.label),
+      }));
       groups.push({
         title: config.title,
+        titleKey: config.titleKey,
         icon: config.icon,
-        items,
+        items: enhancedItems,
       });
     }
   }
@@ -5773,6 +5779,7 @@ async function connect() {
         label,
         value,
         icon: FACT_ICONS[label] ?? null,
+        translationKey: getFactLabelKey(label),
       });
     };
     const packageLabel = resolvePackageLabel(esp.chipName, metadata.pkgVersion, metadata.chipRevision);

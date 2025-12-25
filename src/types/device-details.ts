@@ -2,11 +2,13 @@ export type DeviceFact = {
   label: string;
   value: string;
   icon: string | null;
+  translationKey?: string;
 };
 
 export type DeviceFactGroup = {
   title: string;
   icon: string;
+  titleKey?: string;
   items: DeviceFact[];
 };
 

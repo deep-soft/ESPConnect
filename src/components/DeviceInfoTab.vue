@@ -38,7 +38,7 @@
                     <div v-if="primaryFacts.length" class="summary-list">
                       <div v-for="fact in primaryFacts" :key="fact.label" class="summary-list__item">
                         <v-icon size="16" class="me-1">{{ fact.icon || 'mdi-information-outline' }}</v-icon>
-                        <span>{{ fact.label }} : {{ fact.value }}</span>
+                      <span>{{ translateFactLabel(fact) }} : {{ fact.value }}</span>
                     </div>
                   </div>
                 </div>
@@ -82,21 +82,18 @@
                 <v-card elevation="0" variant="tonal" class="detail-card">
                   <v-card-title>
                   <v-icon class="me-2">{{ group.icon }}</v-icon>
-                  {{ group.title }}
+                  {{ translateGroupTitle(group) }}
                 </v-card-title>
                 <v-divider class="detail-card__divider" />
                 <v-card-text>
                   <div v-for="fact in group.items" :key="fact.label" class="detail-card__item">
                     <div class="detail-card__item-label">
                       <v-icon v-if="fact.icon" class="me-2">{{ fact.icon }}</v-icon>
-                      <span>{{ fact.label }}</span>
+                      <span>{{ translateFactLabel(fact) }}</span>
                     </div>
                     <div class="detail-card__item-value">
                       <template v-if="fact.label === 'PWM/LEDC'">
-                        <VTooltip
-                          location="top"
-                          :text="'PWM/LEDC capabilities are based on the chip family, not on live data read from the device.'"
-                        >
+                        <VTooltip location="top" :text="t('deviceInfo.facts.pwmTooltip')">
                           <template #activator="{ props }">
                             <span class="detail-card__value-with-icon" v-bind="props">
                               <span>{{ fact.value }}</span>
@@ -135,8 +132,8 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import DisconnectedState from './DisconnectedState.vue';
-import { PRIMARY_FACTS } from '../constants/deviceFacts';
-import type { DeviceDetails, DeviceFact } from '../types/device-details';
+import { PRIMARY_FACTS, getFactLabelKey } from '../constants/deviceFacts';
+import type { DeviceDetails, DeviceFact, DeviceFactGroup } from '../types/device-details';
 
 type DeviceDetailsWrapper = { value: DeviceDetails | null };
 
@@ -218,6 +215,14 @@ const featurePreview = computed<string[]>(() => {
   const limit = 6;
   return details.value?.features.slice(0, limit) ?? [];
 });
+
+const translateFactLabel = (fact: DeviceFact): string => {
+  const key = fact.translationKey ?? getFactLabelKey(fact.label);
+  return key ? t(`deviceInfo.facts.labels.${key}`) : fact.label;
+};
+
+const translateGroupTitle = (group: DeviceFactGroup): string =>
+  group.titleKey ? t(`deviceInfo.facts.groups.${group.titleKey}`) : group.title;
 
 </script>
 
