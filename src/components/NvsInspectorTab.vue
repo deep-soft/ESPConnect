@@ -7,31 +7,33 @@
     <v-card variant="tonal" prepend-icon="mdi-database-search">
       <template v-slot:title>
         <div class="d-flex align-center gap-2 flex-wrap">
-          <span class="font-weight-black">NVS Inspector</span>
-          <v-tooltip text="Experimental feature: output may be incomplete or inaccurate." location="bottom">
+          <span class="font-weight-black">{{ t('nvsInspector.title') }}</span>
+          <v-tooltip :text="t('nvsInspector.experimentalTooltip')" location="bottom">
             <template #activator="{ props: tooltipProps }">
-              <v-chip v-bind="tooltipProps" color="warning" variant="tonal">Experimental</v-chip>
+              <v-chip v-bind="tooltipProps" color="warning" variant="tonal">
+                {{ t('nvsInspector.experimentalBadge') }}
+              </v-chip>
             </template>
           </v-tooltip>
         </div>
       </template>
 
       <v-card-text class="d-flex flex-column gap-4">
-        <v-select
-          :items="partitions"
-          item-title="label"
-          item-value="id"
-          density="comfortable"
-          label="Partition name"
-          :model-value="selectedPartitionId"
-          :disabled="loading || !partitions.length"
+          <v-select
+            :items="partitions"
+            item-title="label"
+            item-value="id"
+            density="comfortable"
+            :label="t('nvsInspector.partitionSelectLabel')"
+            :model-value="selectedPartitionId"
+            :disabled="loading || !partitions.length"
           @update:model-value="value => emit('select-partition', value)"
         />
 
         <div class="nvs-inspector__controls">
           <v-btn color="primary" variant="tonal" :disabled="loading || !hasPartitionSelected" @click="emit('read-nvs')">
             <v-icon start>mdi-database-sync</v-icon>
-            Read NVS
+            {{ t('nvsInspector.readButton') }}
           </v-btn>
 
           <v-spacer />
@@ -39,29 +41,34 @@
           <div v-if="result" class="nvs-inspector__summary">
             <v-chip size="small" variant="outlined" color="primary">
               <v-icon start size="18">mdi-information-outline</v-icon>
-              NVS v{{ result.version }}
+              {{ t('nvsInspector.versionLabel', { version: result.version }) }}
             </v-chip>
 
             <v-tooltip
-              :text="`total: ${pageStats.total.toLocaleString()} \u00b7 in-use: ${pageStats.inUse.toLocaleString()} \u00b7 blank: ${pageStats.blank.toLocaleString()} \u00b7 bad: ${pageStats.bad.toLocaleString()}`"
+              :text="t('nvsInspector.pageStatsTooltip', {
+                total: pageStats.total.toLocaleString(),
+                inUse: pageStats.inUse.toLocaleString(),
+                blank: pageStats.blank.toLocaleString(),
+                bad: pageStats.bad.toLocaleString(),
+              })"
               location="bottom"
             >
               <template #activator="{ props: tooltipProps }">
                 <v-chip v-bind="tooltipProps" size="small" variant="outlined" color="secondary">
                   <v-icon start size="18">mdi-book-open-page-variant</v-icon>
-                  {{ result.pages.length.toLocaleString() }} pages
+                  {{ t('nvsInspector.pagesCount', { count: result.pages.length.toLocaleString() }) }}
                 </v-chip>
               </template>
             </v-tooltip>
 
             <v-chip size="small" variant="outlined" color="secondary">
               <v-icon start size="18">mdi-folder-key-outline</v-icon>
-              {{ result.namespaces.length.toLocaleString() }} namespaces
+                {{ t('nvsInspector.namespacesCount', { count: result.namespaces.length.toLocaleString() }) }}
             </v-chip>
 
             <v-chip size="small" variant="outlined" color="secondary">
               <v-icon start size="18">mdi-key-outline</v-icon>
-              {{ result.entries.length.toLocaleString() }} entries
+                {{ t('nvsInspector.entriesCount', { count: result.entries.length.toLocaleString() }) }}
             </v-chip>
           </div>
         </div>
@@ -72,36 +79,35 @@
     </v-card>
 
     <div class="mt-6 d-flex flex-column gap-4">
-      <v-tabs v-model="activeTab" density="comfortable" color="primary">
-        <v-tab value="keys">Keys</v-tab>
-        <v-tab value="pages">Pages</v-tab>
-      </v-tabs>
+        <v-tabs v-model="activeTab" density="comfortable" color="primary">
+          <v-tab value="keys">{{ t('nvsInspector.tabs.keys') }}</v-tab>
+          <v-tab value="pages">{{ t('nvsInspector.tabs.pages') }}</v-tab>
+        </v-tabs>
 
-      <v-window v-model="activeTab">
-        <v-window-item value="keys">
-          <div class="d-flex flex-column gap-4">
-            <v-alert v-if="!result" type="info" variant="tonal" border="start">
-              Read NVS to see keys.
-            </v-alert>
+        <v-window v-model="activeTab">
+          <v-window-item value="keys">
+            <div class="d-flex flex-column gap-4">
+              <v-alert v-if="!result" type="info" variant="tonal" border="start">
+                {{ t('nvsInspector.keys.emptyState') }}
+              </v-alert>
 
             <template v-else>
               <v-card variant="tonal">
         <v-card-title class="d-flex align-center justify-space-between">
-          <div class="d-flex align-center gap-2 flex-wrap">
-            <span>Keys</span>
-            <v-chip
-              v-if="pageFilter !== null"
-              size="small"
-              color="secondary"
-              variant="tonal"
-              closable
-              @click:close="clearPageFilter"
-            >
-              Page p{{ pageFilter }}
-            </v-chip>
-          </div>
+            <div class="d-flex align-center gap-2 flex-wrap">
+              <v-chip
+                v-if="pageFilter !== null"
+                size="small"
+                color="secondary"
+                variant="tonal"
+                closable
+                @click:close="clearPageFilter"
+              >
+                {{ t('nvsInspector.keys.pageFilter', { page: pageFilter }) }}
+              </v-chip>
+            </div>
           <v-chip size="large" variant="outlined" color="primary">
-            {{ filteredEntries.length.toLocaleString() }} shown
+            {{ t('nvsInspector.filteredCount', { count: filteredEntries.length.toLocaleString() }) }}
           </v-chip>
         </v-card-title>
 
@@ -113,7 +119,7 @@
               item-title="title"
               item-value="value"
               density="comfortable"
-              label="Namespace"
+              :label="t('nvsInspector.keys.filters.namespace')"
               variant="outlined"
               hide-details
               class="nvs-inspector__filter"
@@ -121,7 +127,7 @@
             <v-text-field
               v-model="keyFilter"
               density="comfortable"
-              label="Key"
+              :label="t('nvsInspector.keys.filters.key')"
               variant="outlined"
               clearable
               hide-details
@@ -132,15 +138,17 @@
               v-model="typeFilter"
               :items="typeFilterOptions"
               density="comfortable"
-              label="Type"
+              :label="t('nvsInspector.keys.filters.type')"
               variant="outlined"
               hide-details
               class="nvs-inspector__filter"
+              item-title="label"
+              item-value="value"
             />
             <v-text-field
               v-model="valueFilter"
               density="comfortable"
-              label="Value preview"
+              :label="t('nvsInspector.keys.filters.value')"
               variant="outlined"
               clearable
               hide-details
@@ -148,8 +156,8 @@
             />
           </div>
 
-          <v-data-table
-            :headers="headers"
+            <v-data-table
+              :headers="entryHeaders"
             :items="filteredEntries"
             item-key="__key"
             density="compact"
@@ -178,13 +186,20 @@
               <span v-else class="text-medium-emphasis">&mdash;</span>
             </template>
 
-            <template #item.crcOk="{ item }">
-              <v-chip v-if="unwrapItem(item).crcOk === true" size="small" color="success" variant="tonal">OK</v-chip>
-              <v-chip v-else-if="unwrapItem(item).crcOk === false" size="small" color="error" variant="tonal"
-                >BAD</v-chip
-              >
-              <span v-else class="text-medium-emphasis">&mdash;</span>
-            </template>
+              <template #item.crcOk="{ item }">
+                <v-chip v-if="unwrapItem(item).crcOk === true" size="small" color="success" variant="tonal">
+                  {{ t('nvsInspector.status.ok') }}
+                </v-chip>
+                <v-chip
+                  v-else-if="unwrapItem(item).crcOk === false"
+                  size="small"
+                  color="error"
+                  variant="tonal"
+                >
+                  {{ t('nvsInspector.status.bad') }}
+                </v-chip>
+                <span v-else class="text-medium-emphasis">&mdash;</span>
+              </template>
 
             <!-- FIX: parser now uses `location`, not `raw` -->
             <template #item.location="{ item }">
@@ -201,36 +216,38 @@
               <span v-else class="text-medium-emphasis">&mdash;</span>
             </template>
 
-            <template #no-data>
-              <v-alert type="info" variant="tonal" border="start">No entries match the current filters.</v-alert>
-            </template>
+              <template #no-data>
+                <v-alert type="info" variant="tonal" border="start">
+                  {{ t('nvsInspector.keys.noMatches') }}
+                </v-alert>
+              </template>
           </v-data-table>
         </v-card-text>
       </v-card>
 
       <v-expansion-panels v-if="result.errors.length || result.warnings.length" variant="accordion">
         <v-expansion-panel>
-          <v-expansion-panel-title>
-            Warnings / Errors
-            <v-spacer />
-            <v-chip v-if="result.errors.length" size="small" color="error" variant="tonal" class="ml-2">
-              {{ result.errors.length }}
-            </v-chip>
-            <v-chip v-if="result.warnings.length" size="small" color="warning" variant="tonal" class="ml-2">
-              {{ result.warnings.length }}
-            </v-chip>
-          </v-expansion-panel-title>
+            <v-expansion-panel-title>
+              {{ t('nvsInspector.warningsErrors.title') }}
+              <v-spacer />
+              <v-chip v-if="result.errors.length" size="small" color="error" variant="tonal" class="ml-2">
+                {{ result.errors.length }}
+              </v-chip>
+              <v-chip v-if="result.warnings.length" size="small" color="warning" variant="tonal" class="ml-2">
+                {{ result.warnings.length }}
+              </v-chip>
+            </v-expansion-panel-title>
 
           <v-expansion-panel-text>
             <div v-if="result.errors.length" class="mb-4">
-              <div class="text-overline text-medium-emphasis mb-2">Errors</div>
+                <div class="text-overline text-medium-emphasis mb-2">{{ t('nvsInspector.warningsErrors.errors') }}</div>
               <ul class="nvs-inspector__list">
                 <li v-for="(line, idx) in result.errors" :key="'e-' + idx"><code>{{ line }}</code></li>
               </ul>
             </div>
 
             <div v-if="result.warnings.length">
-              <div class="text-overline text-medium-emphasis mb-2">Warnings</div>
+                <div class="text-overline text-medium-emphasis mb-2">{{ t('nvsInspector.warningsErrors.warnings') }}</div>
               <ul class="nvs-inspector__list">
                 <li v-for="(line, idx) in result.warnings" :key="'w-' + idx"><code>{{ line }}</code></li>
               </ul>
@@ -244,34 +261,33 @@
 
         <v-window-item value="pages">
           <div class="d-flex flex-column gap-4">
-            <v-alert v-if="!result" type="info" variant="tonal" border="start">
-              Read NVS to see pages.
-            </v-alert>
+              <v-alert v-if="!result" type="info" variant="tonal" border="start">
+                {{ t('nvsInspector.pages.emptyState') }}
+              </v-alert>
 
             <v-card v-else variant="tonal">
-              <v-card-title class="nvs-inspector__pages-title">
-                <span>Pages</span>
-                <v-chip size="small" variant="tonal" color="primary" class="nvs-inspector__pages-summary">
-                  total: {{ pageStats.total.toLocaleString() }}
-                  <span class="text-medium-emphasis">&middot;</span>
-                  in-use: {{ pageStats.inUse.toLocaleString() }}
-                  <span class="text-medium-emphasis">&middot;</span>
-                  blank: {{ pageStats.blank.toLocaleString() }}
-                  <span class="text-medium-emphasis">&middot;</span>
-                  bad: {{ pageStats.bad.toLocaleString() }}
-                </v-chip>
-              </v-card-title>
+                <v-card-title class="nvs-inspector__pages-title">
+                  <span>{{ t('nvsInspector.pages.title') }}</span>
+                  <v-chip size="small" variant="tonal" color="primary" class="nvs-inspector__pages-summary">
+                    {{ t('nvsInspector.pages.summary', {
+                      total: pageStats.total.toLocaleString(),
+                      inUse: pageStats.inUse.toLocaleString(),
+                      blank: pageStats.blank.toLocaleString(),
+                      bad: pageStats.bad.toLocaleString(),
+                    }) }}
+                  </v-chip>
+                </v-card-title>
 
               <v-card-text>
                 <v-table density="compact" class="nvs-inspector__pages-table">
                   <thead>
                     <tr>
-                      <th class="text-start">Page #</th>
-                      <th class="text-start">State</th>
-                      <th class="text-end">Seq</th>
-                      <th class="text-center">Status</th>
-                      <th class="text-start">Map</th>
-                      <th class="text-end">Errors</th>
+                        <th class="text-start">{{ t('nvsInspector.pages.table.page') }}</th>
+                        <th class="text-start">{{ t('nvsInspector.pages.table.state') }}</th>
+                        <th class="text-end">{{ t('nvsInspector.pages.table.seq') }}</th>
+                        <th class="text-center">{{ t('nvsInspector.pages.table.status') }}</th>
+                        <th class="text-start">{{ t('nvsInspector.pages.table.map') }}</th>
+                        <th class="text-end">{{ t('nvsInspector.pages.table.errors') }}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -290,13 +306,22 @@
                         </span>
                         <span v-else class="text-medium-emphasis">&mdash;</span>
                       </td>
-                      <td class="text-center">
-                        <v-chip v-if="page.state === 'UNINITIALIZED'" size="small" color="grey-darken-1" variant="tonal"
-                          >Blank</v-chip
-                        >
-                        <v-chip v-else-if="page.valid" size="small" color="success" variant="tonal">OK</v-chip>
-                        <v-chip v-else size="small" color="error" variant="tonal">BAD</v-chip>
-                      </td>
+                        <td class="text-center">
+                          <v-chip
+                            v-if="page.state === 'UNINITIALIZED'"
+                            size="small"
+                            color="grey-darken-1"
+                            variant="tonal"
+                          >
+                            {{ t('nvsInspector.status.blank') }}
+                          </v-chip>
+                          <v-chip v-else-if="page.valid" size="small" color="success" variant="tonal">
+                            {{ t('nvsInspector.status.ok') }}
+                          </v-chip>
+                          <v-chip v-else size="small" color="error" variant="tonal">
+                            {{ t('nvsInspector.status.bad') }}
+                          </v-chip>
+                        </td>
                       <td class="nvs-inspector__map-cell">
                         <div class="nvs-inspector__map-widget">
                           <div v-if="page.entryStates?.length === PAGE_ENTRY_COUNT" class="nvs-inspector__entry-map">
@@ -374,6 +399,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import type { DataTableHeader } from 'vuetify';
 
 type PartitionOption = {
@@ -416,6 +442,7 @@ type NvsNamespaceInfo = {
 type EntryStateLabel = 'EMPTY' | 'WRITTEN' | 'ERASED' | 'ILLEGAL';
 type NamespaceFilterValue = 'All' | number;
 type NamespaceFilterOption = { title: string; value: NamespaceFilterValue };
+type TypeFilterOption = { label: string; value: string };
 
 type NvsPageEntryCounts = {
   written: number;
@@ -457,6 +484,8 @@ const emit = defineEmits<{
   (e: 'select-partition', value: number | string | null): void;
   (e: 'read-nvs'): void;
 }>();
+
+const { t } = useI18n();
 
 const PAGE_ENTRY_COUNT = 126;
 
@@ -534,23 +563,50 @@ function entryCellClass(state: EntryStateLabel) {
 function entryCellTitle(entryIndex: number, state: EntryStateLabel) {
   const wordIndex = Math.floor(entryIndex / 16);
   const bitOffset = (entryIndex % 16) * 2;
-  return `Entry #${entryIndex} (word ${wordIndex} / bits ${bitOffset}-${bitOffset + 1}): ${state}`;
+  return t('nvsInspector.entryCellTitle', {
+    entry: entryIndex,
+    word: wordIndex,
+    bitStart: bitOffset,
+    bitEnd: bitOffset + 1,
+    state,
+  });
 }
 
 function pageMapTooltip(page: NvsPage, counts: NvsPageEntryCounts | null) {
-  const lines: string[] = [`Page ${page.index} (${page.state})`];
+  const lines: string[] = [
+    t('nvsInspector.pageTooltipTitle', {
+      index: page.index,
+      state: page.state,
+    }),
+  ];
 
   if (counts) {
     const percentUsed = (counts.written / PAGE_ENTRY_COUNT) * 100;
-    lines.push(`Written: ${counts.written} / ${PAGE_ENTRY_COUNT} (${percentUsed.toFixed(1)}%)`);
-    lines.push(`Erased: ${counts.erased}, Empty: ${counts.empty}, Illegal: ${counts.illegal}`);
+    lines.push(
+      t('nvsInspector.pageTooltipWritten', {
+        written: counts.written.toLocaleString(),
+        total: PAGE_ENTRY_COUNT.toLocaleString(),
+        percent: percentUsed.toFixed(1),
+      }),
+    );
+    lines.push(
+      t('nvsInspector.pageTooltipDistribution', {
+        erased: counts.erased.toLocaleString(),
+        empty: counts.empty.toLocaleString(),
+        illegal: counts.illegal.toLocaleString(),
+      }),
+    );
   } else {
-    lines.push('Entry map unavailable.');
+    lines.push(t('nvsInspector.entryMapUnavailable'));
   }
 
   const errorCount = page.errors?.length ?? 0;
   if (errorCount > 0) {
-    lines.push(`Errors: ${errorCount}`);
+    lines.push(
+      t('nvsInspector.pageTooltipErrors', {
+        count: errorCount.toLocaleString(),
+      }),
+    );
     if (page.errors[0]) lines.push(page.errors[0]);
   }
 
@@ -562,16 +618,16 @@ const keyFilter = ref('');
 const typeFilter = ref('All');
 const valueFilter = ref('');
 
-const headers: DataTableHeader[] = [
-  { title: 'Namespace', key: 'namespace' },
-  { title: 'Key', key: 'key' },
-  { title: 'Type', key: 'type' },
-  { title: 'Value', key: 'valuePreview' },
-  { title: 'Length', key: 'length', align: 'end' },
-  { title: 'CRC', key: 'crcOk', align: 'center' },
-  { title: 'Location', key: 'location' },
-  { title: 'Issues', key: 'issues', align: 'center' },
-];
+const entryHeaders = computed<DataTableHeader[]>(() => [
+    { title: t('nvsInspector.keys.table.namespace'), key: 'namespace' },
+    { title: t('nvsInspector.keys.table.key'), key: 'key' },
+    { title: t('nvsInspector.keys.table.type'), key: 'type' },
+    { title: t('nvsInspector.keys.table.value'), key: 'valuePreview' },
+    { title: t('nvsInspector.keys.table.length'), key: 'length', align: 'end' },
+    { title: t('nvsInspector.keys.table.crc'), key: 'crcOk', align: 'center' },
+    { title: t('nvsInspector.keys.table.location'), key: 'location' },
+    { title: t('nvsInspector.keys.table.issues'), key: 'issues', align: 'center' },
+  ]);
 
 // FIX: avoid shadowing props.hasPartition with a computed of the same name
 const hasPartitionSelected = computed(() => props.hasPartition && Boolean(props.selectedPartitionId));
@@ -628,16 +684,20 @@ const namespaceFilterOptions = computed(() => {
       title: (nameCounts.get(name) ?? 0) > 1 ? `${name} (#${id})` : name,
     }));
 
-  return [{ title: 'All', value: 'All' as const }, ...items];
-});
+    return [{ title: t('nvsInspector.filters.all'), value: 'All' as const }, ...items];
+  });
 
-const typeFilterOptions = computed(() => {
+const typeFilterOptions = computed<TypeFilterOption[]>(() => {
   const items = props.result?.entries ?? [];
   const set = new Set<string>();
   for (const entry of items) {
     if (entry?.type) set.add(entry.type);
   }
-  return ['All', ...Array.from(set).sort((a, b) => a.localeCompare(b))];
+  const sorted = Array.from(set).sort((a, b) => a.localeCompare(b));
+  return [
+    { label: t('nvsInspector.filters.all'), value: 'All' },
+    ...sorted.map(value => ({ label: value, value })),
+  ];
 });
 
 const filteredEntries = computed(() => {
