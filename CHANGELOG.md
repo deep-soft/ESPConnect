@@ -6,8 +6,9 @@
 
 ### Internal
 - Failed detection of flashid is now non-fatal
-- Updated tasmota-webserial-esptool from 7.2.2 to 7.2.3
-- Updated vuetify from 3.11.4 to 3.11.5 
+- Bumps tasmota-webserial-esptool from 7.2.2 to 7.2.3
+- Bumps vuetify from 3.11.4 to 3.11.5
+- Bumps vue-i18n from 9.14.5 to 11.2.7. 
 
 ## 1.1.2
 ### Improvement
