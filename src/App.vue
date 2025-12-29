@@ -654,7 +654,7 @@ import SessionLogTab from './components/SessionLogTab.vue';
 import SerialMonitorTab from './components/SerialMonitorTab.vue';
 import DisconnectedState from './components/DisconnectedState.vue';
 import registerGuides from './data/register-guides.json';
-import { createSpiffsFromImage } from './wasm/spiffs';
+import { createSpiffsFromImage, SpiffsErrorCode } from './wasm/spiffs';
 import { useFatfsManager, useLittlefsManager, useSpiffsManager } from './composables/useFilesystemManagers';
 import { useDialogs } from './composables/useDialogs';
 import { getLanguage, setLanguage, SupportedLocale } from './plugins/i18n';
@@ -3208,6 +3208,14 @@ function cancelSpiffsLoad() {
   spiffsLoadingDialog.label = 'Stopping SPIFFS load...';
 }
 
+function isSpiffsPartitionFullError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'number' && code === SpiffsErrorCode.SPIFFS_ERR_FULL;
+}
+
 // Upload a file to SPIFFS with size checks and staging.
 async function handleSpiffsUpload({ file }: { file: File | null }) {
   if (!spiffsState.client) return;
@@ -3244,6 +3252,13 @@ async function handleSpiffsUpload({ file }: { file: File | null }) {
     spiffsState.uploadBlocked = false;
     spiffsState.uploadBlockedReason = '';
   } catch (error) {
+    const partitionFullMessage = 'SPIFFS partition is full. Delete files or format the partition before uploading.';
+    if (isSpiffsPartitionFullError(error)) {
+      spiffsState.status = partitionFullMessage;
+      spiffsState.error = partitionFullMessage;
+      showUploadError(partitionFullMessage);
+      return;
+    }
     const message = formatErrorMessage(error);
     const isSpaceError = message.includes('Not enough SPIFFS space');
     const isNameTooLong = message.includes('File name too long');
