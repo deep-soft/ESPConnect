@@ -22,11 +22,6 @@ body:
       description: "Short, clear description of the issue."
     validations:
       required: true
-  - type: input
-    id: app_version
-    attributes:
-      label: "App version"
-      description: "From Settings > About, or include commit SHA if built from source."
   - type: dropdown
     id: os
     attributes:
