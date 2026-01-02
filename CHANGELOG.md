@@ -12,6 +12,7 @@
 - Fixed error in the Serial Monitor component when clearing the filter output
 ### Internal
 - Added Vitest to fatfs fixture
+- Added Vitest to littlefs fixture
 ### New Contributors
 - [MeatSuger](https://github.com/MeatSuger) made their first contribution in ([PR #96](https://github.com/thelastoutpostworkshop/ESPConnect/pull/96))
 ## 1.1.3
