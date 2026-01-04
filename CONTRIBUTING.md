@@ -5,7 +5,7 @@ Thank you for your interest in contributing to ESPConnect!
 ## Quick rules
 - Please open a Pull Request against `main` (direct pushes to `main` are disabled).
 - Keep PRs focused (one feature/fix per PR if possible).
-- Make sure CI passes.
+- Make sure typecheck, unit tests, and E2E tests pass.
 
 ## Development
 >Prerequisite: Node.js **>= 22.12.0**.
@@ -16,7 +16,7 @@ npm install
 npm run dev
 ```
 
-## Code style
+## Typecheck
 - Run typecheck: `npm run typecheck`
 
 ## Unit tests
