@@ -1,12 +1,13 @@
 # Changelog
 
-## 1.1.5-preview-3
+## 1.1.5-preview-4
 
 ### Improvement
 - Serial Monitor now renders ANSI color/style escape sequences in the output.
 - Serial Monitor adds a copy-to-clipboard action.
 - Show a progress dialog while erasing the entire flash.
 - Filesystem tools now probe partition contents to detect LittleFS/FAT/SPIFFS before mounting.
+- Filesystem tools now treat `.py` files as text for previews.
 
 ### Internal
 - Removed the decorateLoader shim since it's no longer needed with tasmota-webserial-esptool

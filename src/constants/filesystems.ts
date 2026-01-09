@@ -11,6 +11,7 @@ export const SPIFFS_TEXT_EXTENSIONS = [
   'md',
   'js',
   'ts',
+  'py',
   'css',
   'xml',
   'yaml',
