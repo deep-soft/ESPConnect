@@ -7,6 +7,7 @@
 
 ### Internal runtime
 - Bump tasmota-webserial-esptool 7.3.3 to 7.3.4
+- Bump @types/node from 25.0.5 to 25.0.6 
 
 ### Development tooling
 - Bump vite from 7.3.0 to 7.3.1
