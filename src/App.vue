@@ -230,7 +230,8 @@
               <SerialMonitorTab :monitor-text="monitorText" :monitor-active="monitorActive"
                 :monitor-error="monitorError" :monitor-starting="monitorStarting" :can-start="canStartMonitor"
                 :can-command="canIssueMonitorCommands" @start-monitor="startMonitor" @stop-monitor="stopMonitor()"
-                @clear-monitor="clearMonitorOutput" @reset-board="enterUserFirmware" />
+                @clear-monitor="clearMonitorOutput" @send-monitor-text="sendMonitorText"
+                @reset-board="enterUserFirmware" />
             </v-window-item>
 
             <v-window-item value="log">
@@ -5531,6 +5532,7 @@ let monitorNoiseChunks = 0;
 let monitorNoiseWarned = false;
 let monitorAutoResetPerformed = false;
 let monitorTask: Promise<void> | null = null;
+const monitorTextEncoder = new TextEncoder();
 
 // Cancel any scheduled serial monitor flush.
 function cancelMonitorFlush() {
@@ -5691,6 +5693,21 @@ async function monitorLoop(signal: AbortSignal) {
     appendMonitorChunk(chunk);
   }
   flushPendingMonitorText();
+}
+
+async function sendMonitorText(text: string) {
+  if (!text || !monitorActive.value || !canIssueMonitorCommands.value) {
+    return;
+  }
+  const transportInstance = transport.value;
+  if (!transportInstance) {
+    return;
+  }
+  try {
+    await transportInstance.writeRaw(monitorTextEncoder.encode(text));
+  } catch (error) {
+    appendLog(`Unable to send serial input (${formatErrorMessage(error)}).`, '[ESPConnect-Warn]');
+  }
 }
 
 // Kick off the serial monitor and adjust baud if needed.

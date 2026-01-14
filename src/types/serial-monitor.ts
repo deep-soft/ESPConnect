@@ -14,4 +14,5 @@ export type SerialMonitorTabEmits = {
   (e: 'stop-monitor'): void;
   (e: 'clear-monitor'): void;
   (e: 'reset-board'): void;
+  (e: 'send-monitor-text', value: string): void;
 };

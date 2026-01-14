@@ -61,8 +61,10 @@
       copy: 'Copier',
       clear: 'Vider',
       reset: 'RAZ',
+      send: 'Envoyer',
     },
     filterPlaceholder: 'Filter les informations',
+    inputPlaceholder: 'Envoyer du texte (Ctrl+C)',
     subtitle:
       'La console fonctionne automatiquement à 115 200 bauds.  Le flash de processeur, lui, utilise la fréquence indiquée dans la barre d`outils.',
     info:

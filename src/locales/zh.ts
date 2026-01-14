@@ -51,8 +51,10 @@
       copy: '复制',
       clear: '清除',
       reset: '复位',
+      send: '发送',
     },
     filterPlaceholder: '筛选输出',
+    inputPlaceholder: '发送文本 (Ctrl+C)',
     subtitle:
       '控制台自动以 115200 bps 运行以获得可靠输出。烧录时使用工具栏中选择的波特率。',
     info:

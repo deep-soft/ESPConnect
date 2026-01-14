@@ -158,6 +158,29 @@ export class CompatibleTransport {
       await sleep(30);
     }
   }
+
+  async writeRaw(data: Uint8Array) {
+    if (!data.length) {
+      return;
+    }
+    if (this.isBusy()) {
+      throw new Error('Serial transport busy.');
+    }
+    const loader = this.loader as unknown as { writeToStream?: (data: number[]) => Promise<void> };
+    if (loader?.writeToStream) {
+      await loader.writeToStream(Array.from(data));
+      return;
+    }
+    if (!this.device?.writable) {
+      throw new Error('Serial port is not writable.');
+    }
+    const writer = this.device.writable.getWriter();
+    try {
+      await writer.write(data);
+    } finally {
+      writer.releaseLock();
+    }
+  }
 }
 
 function createLogger(terminal: any, debugLogging: boolean): Logger {

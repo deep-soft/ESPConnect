@@ -3,7 +3,8 @@
 ## 1.1.6-preview
 ### Improvement
 - Flash tools now refresh the partition table after full erase or firmware flashes so the partitions view stays accurate ([issue #104](https://github.com/thelastoutpostworkshop/ESPConnect/issues/104)).
-- Partitions empty state now distinguishes between disconnected devices and connected ESP32s with no partition table ([issue #104](https://github.com/thelastoutpostworkshop/ESPConnect/issues/104))..
+- Partitions empty state now distinguishes between disconnected devices and connected ESP32s with no partition table ([issue #104](https://github.com/thelastoutpostworkshop/ESPConnect/issues/104)).
+- Serial Monitor now lets you send text input, including Ctrl+C, suggest by ator1811 ([issue #90](https://github.com/thelastoutpostworkshop/ESPConnect/issues/90)).
 
 ### Internal runtime
 - Bump tasmota-webserial-esptool 7.3.3 to 7.3.4

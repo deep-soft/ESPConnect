@@ -116,6 +116,30 @@
           {{ t('serialMonitor.emptyState') }}
         </div>
       </v-card-text>
+      <v-divider />
+      <div class="monitor-input">
+        <v-text-field
+          v-model="inputText"
+          density="compact"
+          variant="outlined"
+          class="monitor-input__field"
+          hide-details
+          :placeholder="t('serialMonitor.inputPlaceholder')"
+          :disabled="!canSend"
+          prepend-inner-icon="mdi-console-line"
+          @keydown="handleInputKeydown"
+        />
+        <v-btn
+          color="primary"
+          variant="tonal"
+          size="small"
+          prepend-icon="mdi-send"
+          :disabled="!canSend || !inputText.length"
+          @click="sendInput"
+        >
+          {{ t('serialMonitor.actions.send') }}
+        </v-btn>
+      </div>
     </v-card>
 
     <v-alert
@@ -157,6 +181,7 @@ const props = withDefaults(defineProps<SerialMonitorTabProps>(), {
 
 const terminalEl = ref<unknown>(null);
 const filterText = ref('');
+const inputText = ref('');
 const paused = ref(false);
 const pausedSnapshot = ref('');
 const copying = ref(false);
@@ -441,6 +466,7 @@ const filteredLines = computed(() => {
 const displayHtml = computed(() => buildAnsiHtml(filteredLines.value));
 const displayPlainText = computed(() => filteredLines.value.map(line => line.plain).join('\n'));
 const hasMonitorOutput = computed(() => Boolean(displayPlainText.value && displayPlainText.value.length));
+const canSend = computed(() => props.monitorActive && props.canCommand);
 
 async function copyMonitor(): Promise<void> {
   const text = displayPlainText.value;
@@ -479,6 +505,42 @@ async function copyMonitor(): Promise<void> {
     };
   } finally {
     copying.value = false;
+  }
+}
+
+function sendInput(): void {
+  if (!canSend.value) {
+    return;
+  }
+  const text = inputText.value;
+  if (!text) {
+    return;
+  }
+  emit('send-monitor-text', text);
+  inputText.value = '';
+}
+
+function sendCtrlC(): void {
+  if (!canSend.value) {
+    return;
+  }
+  emit('send-monitor-text', '\x03');
+}
+
+function handleInputKeydown(event: KeyboardEvent): void {
+  if (!canSend.value) {
+    return;
+  }
+  if (event.ctrlKey && event.key.toLowerCase() === 'c') {
+    event.preventDefault();
+    event.stopPropagation();
+    sendCtrlC();
+    return;
+  }
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    event.stopPropagation();
+    sendInput();
   }
 }
 
@@ -808,6 +870,17 @@ onMounted(() => {
   padding: 20px;
 }
 
+.monitor-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px 16px;
+}
+
+.monitor-input__field {
+  flex: 1;
+}
+
 @media (max-width: 959px) {
   .monitor-card__title {
     flex-direction: column;
@@ -817,6 +890,11 @@ onMounted(() => {
   .monitor-card__actions {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .monitor-input {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

@@ -61,8 +61,10 @@
       copy: 'Copy',
       clear: 'Clear',
       reset: 'Reset',
+      send: 'Send',
     },
     filterPlaceholder: 'Filter output',
+    inputPlaceholder: 'Send text (Ctrl+C)',
     subtitle:
       'Console run at 115200 bps automatically for reliable output. Flashing uses the baud rate selected in the toolbar.',
     info:

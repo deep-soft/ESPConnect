@@ -75,6 +75,10 @@ export class CompatibleTransport {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
   }
+
+  async writeRaw(_data: Uint8Array) {
+    return;
+  }
 }
 
 export interface EsptoolClient {
