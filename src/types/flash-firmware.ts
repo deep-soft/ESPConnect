@@ -42,4 +42,7 @@ export type RegisterReference = {
 
 export type FirmwareInputValue = File | File[] | null;
 
-export type EraseFlashPayload = { mode: 'full' };
+export type EraseFlashPayload =
+  | { mode: 'full' }
+  | { mode: 'partition'; partition?: PartitionOptionValue | null }
+  | { mode: 'region'; offset?: string | number | null; length?: string | number | null; label?: string };

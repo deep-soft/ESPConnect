@@ -717,6 +717,7 @@ import type { SerialMonitorError } from './types/serial-monitor';
 import type { SessionLogTabRef } from './types/session-log';
 import type {
   AlertType,
+  EraseFlashPayload,
   PartitionOptionValue,
   ProgressDialogState,
   RegisterOption,
@@ -3957,6 +3958,8 @@ const flashProgressDialog = reactive<ProgressDialogState>({
   indeterminate: false,
 });
 const flashCancelRequested = ref(false);
+const ERASE_CANCEL_MESSAGE = 'Flash erase cancelled by user';
+let eraseFillBlock: number[] | null = null;
 const selectedBaud = ref<BaudRate>(DEFAULT_FLASH_BAUD as BaudRate);
 const baudrateOptions = SUPPORTED_BAUDRATES;
 const flashOffset = ref('0x0');
@@ -7117,23 +7120,204 @@ function handleSelectIntegrityPartition(value: PartitionOptionValue) {
 
 
 
-// Erase flash (currently full-chip only) with confirmation.
-async function handleEraseFlash(payload = { mode: 'full' }) {
+// Erase a specific flash region by streaming 0xFF blocks to the loader.
+async function eraseFlashRegion(offset: number, length: number, options: { label?: string } = {}) {
+  const loaderInstance = loader.value as ESPLoader & { getFlashWriteSize?: () => number; IS_STUB?: boolean };
+  if (!loaderInstance) {
+    throw new Error('Device not connected.');
+  }
+  if (!Number.isSafeInteger(offset) || offset < 0) {
+    throw new Error('Invalid flash offset.');
+  }
+  if (!Number.isSafeInteger(length) || length <= 0) {
+    throw new Error('Invalid flash length.');
+  }
+  const writeSize = typeof loaderInstance.getFlashWriteSize === 'function' ? loaderInstance.getFlashWriteSize() : 0x4000;
+  if (!eraseFillBlock || eraseFillBlock.length !== writeSize) {
+    eraseFillBlock = new Array(writeSize).fill(0xff);
+  }
+  const totalBlocks = Math.ceil(length / writeSize);
+  const baseLabel =
+    options.label && options.label.trim()
+      ? `${t('flashFirmware.backup.status.erasingRegion')} (${options.label})`
+      : t('flashFirmware.backup.status.erasingRegion');
+
+  flashProgressDialog.visible = true;
+  flashProgressDialog.indeterminate = false;
+  flashProgressDialog.value = 0;
+  flashProgressDialog.label = baseLabel;
+  flashCancelRequested.value = false;
+
+  await runLoaderOperation(async () => {
+    await loaderInstance.flashBegin(length, offset);
+    for (let seq = 0; seq < totalBlocks; seq += 1) {
+      if (flashCancelRequested.value) {
+        throw new Error(ERASE_CANCEL_MESSAGE);
+      }
+      await loaderInstance.flashBlock(eraseFillBlock as number[], seq);
+      const written = Math.min(length, (seq + 1) * writeSize);
+      const pct = Math.min(100, Math.floor((written / length) * 100));
+      flashProgressDialog.value = pct;
+      flashProgressDialog.label = `${baseLabel} - ${pct}%`;
+    }
+    if (loaderInstance.IS_STUB) {
+      await loaderInstance.flashBegin(0, 0);
+      await loaderInstance.flashFinish();
+    }
+  });
+
+  flashProgressDialog.value = 100;
+}
+
+// Erase flash with confirmation (entire chip, partition, or custom region).
+async function handleEraseFlash(payload: EraseFlashPayload = { mode: 'full' }) {
   const loaderInstance = loader.value;
   if (!loaderInstance) {
     flashReadStatus.value = t('flashFirmware.backup.status.connectFirst');
     flashReadStatusType.value = 'warning';
     return;
   }
+
+  const mode = payload.mode ?? 'full';
+
+  if (mode === 'partition') {
+    const partitionPayload = payload as Extract<EraseFlashPayload, { mode: 'partition' }>;
+    const partitionValue = partitionPayload.partition ?? selectedPartitionDownload.value;
+    const option = partitionOptionLookup.value.get(partitionValue);
+    if (!option) {
+      flashReadStatusType.value = 'warning';
+      flashReadStatus.value = t('flashFirmware.backup.status.partitionRequired');
+      return;
+    }
+
+    const confirmErase = await showConfirmation({
+      title: t('flashFirmware.backup.erasePartitionConfirmTitle'),
+      message: t('flashFirmware.backup.erasePartitionConfirmMessage', {
+        label: option.baseLabel,
+        offset: option.offsetHex,
+        size: option.sizeText,
+      }),
+      confirmText: t('flashFirmware.backup.eraseConfirmButton'),
+      cancelText: t('dialogs.cancel'),
+      destructive: true,
+    });
+    if (!confirmErase) {
+      flashReadStatusType.value = 'info';
+      flashReadStatus.value = t('flashFirmware.backup.status.cancelled');
+      appendLog('Flash erase cancelled by user.', '[ESPConnect-Warn]');
+      return;
+    }
+
+    try {
+      maintenanceBusy.value = true;
+      flashInProgress.value = true;
+      flashReadStatusType.value = 'info';
+      flashReadStatus.value = t('flashFirmware.backup.status.erasingPartition');
+      await eraseFlashRegion(option.offset, option.size, { label: option.baseLabel });
+      flashReadStatusType.value = 'success';
+      flashReadStatus.value = t('flashFirmware.backup.status.partitionComplete');
+      appendLog(
+        `Partition erased: ${option.baseLabel} (${option.offsetHex}, ${option.sizeText}).`,
+        '[ESPConnect-Debug]',
+      );
+    } catch (error) {
+      const message = formatErrorMessage(error);
+      const cancelled = message === ERASE_CANCEL_MESSAGE;
+      flashReadStatusType.value = cancelled ? 'warning' : 'error';
+      flashReadStatus.value = cancelled
+        ? t('flashFirmware.backup.status.cancelled')
+        : t('flashFirmware.backup.status.failed', { error: message });
+    } finally {
+      maintenanceBusy.value = false;
+      flashInProgress.value = false;
+      flashProgressDialog.visible = false;
+      flashProgressDialog.value = 0;
+      flashProgressDialog.label = '';
+      flashProgressDialog.indeterminate = false;
+      flashCancelRequested.value = false;
+    }
+    return;
+  }
+
+  if (mode === 'region') {
+    let offset: number;
+    let length: number;
+    try {
+      const regionPayload = payload as Extract<EraseFlashPayload, { mode: 'region' }>;
+      const offsetSource = regionPayload.offset ?? flashReadOffset.value;
+      const lengthSource = regionPayload.length ?? flashReadLength.value;
+      if (!offsetSource?.toString().trim() || !lengthSource?.toString().trim()) {
+        flashReadStatusType.value = 'warning';
+        flashReadStatus.value = t('flashFirmware.backup.status.regionRequired');
+        return;
+      }
+      offset = parseNumericInput(offsetSource as string, 'Flash offset');
+      length = parseNumericInput(lengthSource as string, 'Flash length');
+    } catch (error) {
+      flashReadStatusType.value = 'error';
+      flashReadStatus.value = formatErrorMessage(error);
+      return;
+    }
+    if (flashSizeBytes.value && offset + length > flashSizeBytes.value) {
+      flashReadStatusType.value = 'warning';
+      flashReadStatus.value = t('flashFirmware.backup.status.regionOutOfBounds');
+      return;
+    }
+
+    const offsetHex = '0x' + offset.toString(16).toUpperCase();
+    const lengthHex = '0x' + length.toString(16).toUpperCase();
+    const regionPayload = payload as Extract<EraseFlashPayload, { mode: 'region' }>;
+    const label = regionPayload.label || t('flashFirmware.backup.downloadRegion');
+    const confirmErase = await showConfirmation({
+      title: t('flashFirmware.backup.eraseRegionConfirmTitle'),
+      message: t('flashFirmware.backup.eraseRegionConfirmMessage', {
+        label,
+        offset: offsetHex,
+        length: length.toLocaleString(),
+      }),
+      confirmText: t('flashFirmware.backup.eraseConfirmButton'),
+      cancelText: t('dialogs.cancel'),
+      destructive: true,
+    });
+    if (!confirmErase) {
+      flashReadStatusType.value = 'info';
+      flashReadStatus.value = t('flashFirmware.backup.status.cancelled');
+      appendLog('Flash erase cancelled by user.', '[ESPConnect-Warn]');
+      return;
+    }
+
+    try {
+      maintenanceBusy.value = true;
+      flashInProgress.value = true;
+      flashReadStatusType.value = 'info';
+      flashReadStatus.value = t('flashFirmware.backup.status.erasingRegion');
+      await eraseFlashRegion(offset, length, { label: `${label} ${offsetHex} (${lengthHex})` });
+      flashReadStatusType.value = 'success';
+      flashReadStatus.value = t('flashFirmware.backup.status.regionComplete');
+      appendLog(`Flash region erased: ${offsetHex} length ${lengthHex}.`, '[ESPConnect-Debug]');
+    } catch (error) {
+      const message = formatErrorMessage(error);
+      const cancelled = message === ERASE_CANCEL_MESSAGE;
+      flashReadStatusType.value = cancelled ? 'warning' : 'error';
+      flashReadStatus.value = cancelled
+        ? t('flashFirmware.backup.status.cancelled')
+        : t('flashFirmware.backup.status.failed', { error: message });
+    } finally {
+      maintenanceBusy.value = false;
+      flashInProgress.value = false;
+      flashProgressDialog.visible = false;
+      flashProgressDialog.value = 0;
+      flashProgressDialog.label = '';
+      flashProgressDialog.indeterminate = false;
+      flashCancelRequested.value = false;
+    }
+    return;
+  }
+
   const eraseFlashFn = (loaderInstance as ESPLoader & { eraseFlash?: () => Promise<void> }).eraseFlash;
   if (!eraseFlashFn) {
     flashReadStatusType.value = 'warning';
     flashReadStatus.value = t('flashFirmware.backup.status.unsupported');
-    return;
-  }
-  if (payload?.mode !== 'full') {
-    flashReadStatusType.value = 'warning';
-    flashReadStatus.value = t('flashFirmware.backup.status.selectiveUnsupported');
     return;
   }
 
