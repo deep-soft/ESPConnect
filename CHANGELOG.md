@@ -1,13 +1,14 @@
 # Changelog
 
 ## 1.1.8-preview
+### Internal runtime
+- Bump tasmota-webserial-esptool 7.3.4 to 7.3.5
 
 ## 1.1.7
 ### Fixed
 - Serial Monitor now appends a newline to every command sent.
 
 ### Internal runtime
-- Bump tasmota-webserial-esptool 7.3.4 to 9.1.9
 - Bump electron from 39.2.7 to 40.0.0
 - Bump vue from from 3.5.11 to 3.5.27
 - Bump vuetify from 3.11.6 to 3.11.7
