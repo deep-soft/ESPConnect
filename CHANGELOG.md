@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.10-preview
+## 1.1.10
 - Added German translations. Thanks to flxcraft for the contribution ([PR #141](https://github.com/thelastoutpostworkshop/ESPConnect/pull/141)).
 
 ## 1.1.9
