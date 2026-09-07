@@ -1,8 +1,18 @@
 diff --git a/node_modules/tasmota-webserial-esptool/dist/const.js b/node_modules/tasmota-webserial-esptool/dist/const.js
-index 54f8335..3ec9cb2 100644
 --- a/node_modules/tasmota-webserial-esptool/dist/const.js
 +++ b/node_modules/tasmota-webserial-esptool/dist/const.js
-@@ -208,10 +208,10 @@ export const ESP32P4_PMU_EXT_LDO_P0_0P1A_REG = ESP32P4_DR_REG_PMU_BASE + 0x1b8;
+@@ -197,7 +197,9 @@
+ export const ESP32P4_SPI_W0_OFFS = 0x58;
+ export const ESP32P4_UART_DATE_REG_ADDR = 0x500ca000 + 0x8c;
+ export const ESP32P4_BOOTLOADER_FLASH_OFFSET = 0x2000;
+-// Flash power-on related registers and bits needed for ECO6 (Rev 301)
++// Flash power-on related registers and bits needed for ECO6/ECO7 (Rev 301/302)
++export const ESP32P4_EFUSE_RD_REPEAT_DATA1_REG = ESP32P4_BASEFUSEADDR + 0x034;
++export const ESP32P4_EFUSE_DOWNLOAD_MODE_XPD_ON_MASK = 1 << 16;
+ export const ESP32P4_DR_REG_LPAON_BASE = 0x50110000;
+ export const ESP32P4_DR_REG_PMU_BASE = ESP32P4_DR_REG_LPAON_BASE + 0x5000;
+ export const ESP32P4_DR_REG_LP_SYS_BASE = ESP32P4_DR_REG_LPAON_BASE + 0x0;
+@@ -208,10 +210,10 @@
  export const ESP32P4_PMU_0P1A_TARGET0_0 = 0xff << 23;
  export const ESP32P4_PMU_0P1A_FORCE_TIEH_SEL_0 = 1 << 7;
  export const ESP32P4_PMU_DATE_REG = ESP32P4_DR_REG_PMU_BASE + 0x3fc;
@@ -16,6 +26,76 @@ index 54f8335..3ec9cb2 100644
  export const ESP32S31_SPI_USR_OFFS = 0x18;
  export const ESP32S31_SPI_USR1_OFFS = 0x1c;
  export const ESP32S31_SPI_USR2_OFFS = 0x20;
+diff --git a/node_modules/tasmota-webserial-esptool/dist/esp_loader.js b/node_modules/tasmota-webserial-esptool/dist/esp_loader.js
+--- a/node_modules/tasmota-webserial-esptool/dist/esp_loader.js
++++ b/node_modules/tasmota-webserial-esptool/dist/esp_loader.js
+@@ -1,5 +1,5 @@
+ /// <reference types="@types/w3c-web-serial" />
+-import { CHIP_FAMILY_ESP32, CHIP_FAMILY_ESP32S2, CHIP_FAMILY_ESP32S3, CHIP_FAMILY_ESP32C2, CHIP_FAMILY_ESP32C3, CHIP_FAMILY_ESP32C5, CHIP_FAMILY_ESP32C6, CHIP_FAMILY_ESP32C61, CHIP_FAMILY_ESP32H2, CHIP_FAMILY_ESP32H4, CHIP_FAMILY_ESP32H21, CHIP_FAMILY_ESP32P4, CHIP_FAMILY_ESP32S31, CHIP_FAMILY_ESP8266, MAX_TIMEOUT, DEFAULT_TIMEOUT, ERASE_REGION_TIMEOUT_PER_MB, ESP_CHANGE_BAUDRATE, ESP_CHECKSUM_MAGIC, ESP_FLASH_BEGIN, ESP_FLASH_DATA, ESP_FLASH_END, ESP_MEM_BEGIN, ESP_MEM_DATA, ESP_MEM_END, ESP_READ_REG, ESP_WRITE_REG, ESP_SPI_ATTACH, ESP_SYNC, ESP_GET_SECURITY_INFO, FLASH_SECTOR_SIZE, FLASH_WRITE_SIZE, STUB_FLASH_WRITE_SIZE, MEM_END_ROM_TIMEOUT, ROM_INVALID_RECV_MSG, SYNC_PACKET, SYNC_TIMEOUT, USB_RAM_BLOCK, ESP_ERASE_FLASH, ESP_READ_FLASH, CHIP_ERASE_TIMEOUT, FLASH_READ_TIMEOUT, timeoutPerMb, ESP_ROM_BAUD, USB_JTAG_SERIAL_PID, ESP_FLASH_DEFL_BEGIN, ESP_FLASH_DEFL_DATA, ESP_FLASH_DEFL_END, getSpiFlashAddresses, DETECTED_FLASH_SIZES, CHIP_DETECT_MAGIC_REG_ADDR, CHIP_DETECT_MAGIC_VALUES, CHIP_ID_TO_INFO, ESP32_BASEFUSEADDR, ESP32_APB_CTL_DATE_ADDR, ESP32S2_EFUSE_BLOCK1_ADDR, ESP32S3_EFUSE_BLOCK1_ADDR, ESP32C2_EFUSE_BLOCK2_ADDR, ESP32C5_EFUSE_BLOCK1_ADDR, ESP32C6_EFUSE_BLOCK1_ADDR, ESP32C61_EFUSE_BLOCK1_ADDR, ESP32H2_EFUSE_BLOCK1_ADDR, ESP32P4_EFUSE_BLOCK1_ADDR, ESP32S31_EFUSE_BLOCK1_ADDR, ESP32C3_EFUSE_RD_MAC_SPI_SYS_3_REG, ESP32C3_EFUSE_RD_MAC_SPI_SYS_5_REG, ESP32C5_UART_CLKDIV_REG, ESP32C5_PCR_SYSCLK_CONF_REG, ESP32C5_PCR_SYSCLK_XTAL_FREQ_V, ESP32C5_PCR_SYSCLK_XTAL_FREQ_S, SlipReadError, ESP32P4_LP_SYSTEM_REG_ANA_XPD_PAD_GROUP_REG, ESP32P4_PMU_EXT_LDO_P0_0P1A_ANA_REG, ESP32P4_PMU_ANA_0P1A_EN_CUR_LIM_0, ESP32P4_PMU_EXT_LDO_P0_0P1A_REG, ESP32P4_PMU_0P1A_TARGET0_0, ESP32P4_PMU_0P1A_FORCE_TIEH_SEL_0, ESP32P4_PMU_DATE_REG, } from "./const";
++import { CHIP_FAMILY_ESP32, CHIP_FAMILY_ESP32S2, CHIP_FAMILY_ESP32S3, CHIP_FAMILY_ESP32C2, CHIP_FAMILY_ESP32C3, CHIP_FAMILY_ESP32C5, CHIP_FAMILY_ESP32C6, CHIP_FAMILY_ESP32C61, CHIP_FAMILY_ESP32H2, CHIP_FAMILY_ESP32H4, CHIP_FAMILY_ESP32H21, CHIP_FAMILY_ESP32P4, CHIP_FAMILY_ESP32S31, CHIP_FAMILY_ESP8266, MAX_TIMEOUT, DEFAULT_TIMEOUT, ERASE_REGION_TIMEOUT_PER_MB, ESP_CHANGE_BAUDRATE, ESP_CHECKSUM_MAGIC, ESP_FLASH_BEGIN, ESP_FLASH_DATA, ESP_FLASH_END, ESP_MEM_BEGIN, ESP_MEM_DATA, ESP_MEM_END, ESP_READ_REG, ESP_WRITE_REG, ESP_SPI_ATTACH, ESP_SYNC, ESP_GET_SECURITY_INFO, FLASH_SECTOR_SIZE, FLASH_WRITE_SIZE, STUB_FLASH_WRITE_SIZE, MEM_END_ROM_TIMEOUT, ROM_INVALID_RECV_MSG, SYNC_PACKET, SYNC_TIMEOUT, USB_RAM_BLOCK, ESP_ERASE_FLASH, ESP_READ_FLASH, CHIP_ERASE_TIMEOUT, FLASH_READ_TIMEOUT, timeoutPerMb, ESP_ROM_BAUD, USB_JTAG_SERIAL_PID, ESP_FLASH_DEFL_BEGIN, ESP_FLASH_DEFL_DATA, ESP_FLASH_DEFL_END, getSpiFlashAddresses, DETECTED_FLASH_SIZES, CHIP_DETECT_MAGIC_REG_ADDR, CHIP_DETECT_MAGIC_VALUES, CHIP_ID_TO_INFO, ESP32_BASEFUSEADDR, ESP32_APB_CTL_DATE_ADDR, ESP32S2_EFUSE_BLOCK1_ADDR, ESP32S3_EFUSE_BLOCK1_ADDR, ESP32C2_EFUSE_BLOCK2_ADDR, ESP32C5_EFUSE_BLOCK1_ADDR, ESP32C6_EFUSE_BLOCK1_ADDR, ESP32C61_EFUSE_BLOCK1_ADDR, ESP32H2_EFUSE_BLOCK1_ADDR, ESP32P4_EFUSE_BLOCK1_ADDR, ESP32S31_EFUSE_BLOCK1_ADDR, ESP32C3_EFUSE_RD_MAC_SPI_SYS_3_REG, ESP32C3_EFUSE_RD_MAC_SPI_SYS_5_REG, ESP32C5_UART_CLKDIV_REG, ESP32C5_PCR_SYSCLK_CONF_REG, ESP32C5_PCR_SYSCLK_XTAL_FREQ_V, ESP32C5_PCR_SYSCLK_XTAL_FREQ_S, SlipReadError, ESP32P4_EFUSE_RD_REPEAT_DATA1_REG, ESP32P4_EFUSE_DOWNLOAD_MODE_XPD_ON_MASK, ESP32P4_LP_SYSTEM_REG_ANA_XPD_PAD_GROUP_REG, ESP32P4_PMU_EXT_LDO_P0_0P1A_ANA_REG, ESP32P4_PMU_ANA_0P1A_EN_CUR_LIM_0, ESP32P4_PMU_EXT_LDO_P0_0P1A_REG, ESP32P4_PMU_0P1A_TARGET0_0, ESP32P4_PMU_0P1A_FORCE_TIEH_SEL_0, ESP32P4_PMU_DATE_REG, } from "./const";
+ import { getStubCode } from "./stubs";
+ import { hexFormatter, padTo, sleep, slipEncode, toHex } from "./util";
+ // @ts-expect-error pako ESM module doesn't have proper type definitions
+@@ -321,8 +321,8 @@
+         await this.connectWithResetStrategies();
+         // Detect chip type
+         await this.detectChip();
+-        // Power on flash for ESP32-P4 Rev 301 (must be done before loading stub)
+-        if (this.chipFamily === CHIP_FAMILY_ESP32P4 && this.chipRevision === 301) {
++        // Power on flash for ESP32-P4 Rev 301/302 (must be done before loading stub)
++        if (this.chipFamily === CHIP_FAMILY_ESP32P4 && (this.chipRevision === 301 || this.chipRevision === 302)) {
+             await this.powerOnFlash();
+         }
+         // Read the OTP data for this chip and store into this.efuses array
+@@ -495,18 +495,30 @@
+         return major * 100 + minor;
+     }
+     /**
+-     * Power on the flash chip for ESP32-P4 Rev 301 (ECO6)
+-     * The flash chip is powered off by default on ECO6, when the default flash
++     * Power on the flash chip for ESP32-P4 Rev 301/302 (ECO6/ECO7)
++     * The flash chip is powered off by default on ECO6/ECO7, when the default flash
+      * voltage changed from 1.8V to 3.3V. This is to prevent damage to 1.8V flash chips.
+      */
+     async powerOnFlash() {
+         if (this.chipFamily !== CHIP_FAMILY_ESP32P4) {
+             return; // Only needed for ESP32-P4
+         }
+-        if (this.chipRevision !== 301) {
+-            return; // Only needed for Rev 301 (ECO6)
+-        }
+-        this.logger.debug("Powering on flash for ESP32-P4 Rev 301 (ECO6)");
++        if (this.chipRevision !== 301 && this.chipRevision !== 302) {
++            return; // Only needed for Rev 301/302 (ECO6/ECO7)
++        }
++        // Rev 302 ROM can already power flash in download mode. Release its
++        // force-on state before attaching flash; preserve unrelated PMU bits.
++        if (this.chipRevision === 302) {
++            const efuse = await this.readRegister(ESP32P4_EFUSE_RD_REPEAT_DATA1_REG);
++            if (efuse & ESP32P4_EFUSE_DOWNLOAD_MODE_XPD_ON_MASK) {
++                const date = await this.readRegister(ESP32P4_PMU_DATE_REG);
++                if ((date & 3) === 3) {
++                    await this.writeRegister(ESP32P4_PMU_DATE_REG, date & ~3);
++                }
++                return;
++            }
++        }
++        this.logger.debug(`Powering on flash for ESP32-P4 Rev ${this.chipRevision}`);
+         // Power up pad group
+         await this.writeRegister(ESP32P4_LP_SYSTEM_REG_ANA_XPD_PAD_GROUP_REG, 1);
+         await sleep(10); // 0.01 seconds
+@@ -1879,9 +1891,9 @@
+             if (!this.port.writable || !this.port.readable) {
+                 throw new Error("Port not ready after reconnect");
+             }
+-            // Power on flash for ESP32-P4 Rev 301 (must be done before loading stub)
++            // Power on flash for ESP32-P4 Rev 301/302 (must be done before loading stub)
+             if (this.chipFamily === CHIP_FAMILY_ESP32P4 &&
+-                this.chipRevision === 301) {
++                (this.chipRevision === 301 || this.chipRevision === 302)) {
+                 await this.powerOnFlash();
+             }
+             // Load stub
 diff --git a/node_modules/tasmota-webserial-esptool/dist/stubs/esp32s31.json b/node_modules/tasmota-webserial-esptool/dist/stubs/esp32s31.json
 new file mode 100644
 index 0000000..96e1543

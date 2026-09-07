@@ -73,7 +73,7 @@ describe("tasmota-webserial-esptool wrapper contract", () => {
     });
 
     expect(statuses[0]).toMatchObject({
-      message: "tasmota-webserial-esptool v(7.3.10) [ESP32-S31 compatibility patch active]",
+      message: "tasmota-webserial-esptool v(7.3.10) [ESP32-S31 and ESP32-P4 rev 3.2 compatibility patches active]",
       showInDialog: false,
     });
 
