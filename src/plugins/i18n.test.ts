@@ -55,6 +55,15 @@ describe('i18n locale selection', () => {
     expect(i18n.global.locale.value).toBe('es');
   });
 
+  it('uses vi when navigator languages include Vietnamese', async () => {
+    setNavigator(['vi-VN', 'en-US']);
+    setWindowWithLocalStorage(null);
+
+    const { i18n } = await loadI18n();
+
+    expect(i18n.global.locale.value).toBe('vi');
+  });
+
   it('falls back to en when navigator languages are unsupported', async () => {
     setNavigator(['ja-JP']);
     setWindowWithLocalStorage(null);

@@ -4448,6 +4448,7 @@ const languageLabelKeys: Record<SupportedLocale, string> = {
   de: 'language.german',
   cs: 'language.czech',
   es: 'language.spanish',
+  vi: 'language.vietnamese',
 };
 const languageOptions = computed(() =>
   supportedLocales.map(code => ({
