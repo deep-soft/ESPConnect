@@ -2,7 +2,7 @@
   "name": "espconnect",
   "productName": "ESPConnect",
   "private": true,
-  "version": "1.1.21",
+  "version": "1.1.22",
   "type": "module",
   "description": "Browser-based control center for ESP32 and ESP8266 boards",
   "main": "electron/main.cjs",
@@ -22,12 +22,13 @@
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "publish": "electron-forge publish"
+    "publish": "electron-forge publish",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "electron-squirrel-startup": "^1.0.1",
-    "tasmota-webserial-esptool": "^7.3.7",
+    "tasmota-webserial-esptool": "7.3.10",
     "vue": "^3.5.34",
     "vue-i18n": "^11.4.4",
     "vuetify": "^4.0.7"
@@ -45,6 +46,7 @@
     "@types/node": "^26.1.1",
     "@vitejs/plugin-vue": "^6.0.7",
     "electron": "^43.2.0",
+    "patch-package": "^8.0.1",
     "sass": "^1.100.0",
     "typescript": "^5.9.3",
     "vite": "^8.0.14",

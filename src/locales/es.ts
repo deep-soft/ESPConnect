@@ -641,6 +641,7 @@ const es = {
     german: 'German',
     czech: 'Czech',
     spanish: 'Español',
+    vietnamese: 'Vietnamese',
     switchTo: 'Cambiar a {language}',
   },
   theme: {

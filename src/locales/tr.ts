@@ -628,6 +628,7 @@ const tr = {
     german: 'Almanca',
     czech: 'Çekçe',
     spanish: 'İspanyolca',
+    vietnamese: 'Vietnamca',
     switchTo: '{language} diline geç',
   },
   theme: {
