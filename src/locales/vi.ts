@@ -1,7 +1,7 @@
 const vi = {
   app: {
     title: 'ESPConnect',
-    sectionsLabel: 'Sections',
+    sectionsLabel: 'Các mục',
     resourcesLabel: 'Tài nguyên',
   },
   navigation: {
@@ -14,20 +14,20 @@ const vi = {
     fatfs: 'Công cụ FATFS',
     flash: 'Công cụ Flash',
     console: 'Trình giám sát serial',
-    log: 'Sesion Log',
+    log: 'Nhật ký phiên',
     about: 'Giới thiệu',
     makerTools: 'Maker Tools',
   },
   resources: {
     tutorial: 'Hướng dẫn',
-    buyCoffee: 'Buy Me a Coffee',
-    donatePaypal: 'Donate via PayPal',
+    buyCoffee: 'Mua cho tôi một ly cà phê',
+    donatePaypal: 'Ủng hộ qua PayPal',
     getHelp: 'Nhận trợ giúp',
   },
   makerTools: {
     title: 'Maker Tools',
     subtitle: 'Các tiện ích Maker từ The Last Outpost Workshop cho ESP32 và các dự án nhúng.',
-    thumbnailAlt: '{title} tutorial thumbnail',
+    thumbnailAlt: 'Ảnh thu nhỏ của hướng dẫn {title}',
     support: {
       title: 'Hỗ trợ dự án',
       description:
@@ -49,7 +49,7 @@ const vi = {
       espBoardVault: {
         title: 'ESP Board Vault',
         description:
-          'ESP Board Vault is a free local-first desktop inventory app that helps ESP32 makers scan, identify, organize, and track their boards. Create board records with hardware details, partition maps, photos, projects, checklists, and backups. No account, no cloud backend, no telemetry - everything stays on your computer.',
+          'ESP Board Vault là ứng dụng quản lý bo mạch miễn phí trên máy tính, ưu tiên lưu trữ cục bộ, giúp người dùng ESP32 quét, nhận diện, sắp xếp và theo dõi các bo mạch của mình. Tạo hồ sơ bo mạch với thông tin phần cứng, sơ đồ phân vùng, ảnh, dự án, danh sách kiểm tra và bản sao lưu. Không cần tài khoản, không có máy chủ đám mây, không thu thập dữ liệu sử dụng - mọi thứ đều được lưu trên máy tính của bạn.',
         sourceLabel: 'thelastoutpostworkshop/ESPVault',
       },
       partitionBuilder: {
@@ -129,7 +129,7 @@ const vi = {
       'Bắt đầu trình giám sát nối tiếp sẽ đặt lại bo mạch vào chế độ firmware bình thường để bạn xem đầu ra UART. Dừng trình giám sát nối tiếp sẽ tự động quay lại chế độ bootloader (stub) để bảo trì (flash, công cụ phân vùng, v.v.).',
     emptyState: 'Đầu ra của trình giám sát sẽ xuất hiện ở đây sau khi bắt đầu.',
     copySuccess: 'Đã sao chép đầu ra trình giám sát nối tiếp vào clipboard.',
-    copyError: 'Không thể sao chép đầu ra cuar serial monitor. Vui lòng thử lại.',
+    copyError: 'Không thể sao chép đầu ra của trình giám sát nối tiếp. Vui lòng thử lại.',
   },
   serialPortPicker: {
     title: 'Chọn cổng nối tiếp',
@@ -629,7 +629,7 @@ const vi = {
     czech: 'Czech',
     spanish: 'Spanish',
     vietnamese: 'Tiếng Việt',
-    switchTo: 'Switch to {language}',
+    switchTo: 'Chuyển sang {language}',
   },
   theme: {
     light: 'sáng',
