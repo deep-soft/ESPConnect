@@ -1,4 +1,5 @@
 import { ESPLoader } from 'tasmota-webserial-esptool';
+import { P4CompatibleLoader } from './p4CompatibleLoader';
 import type { Logger } from 'tasmota-webserial-esptool/dist/const.js';
 import type { } from '../types/web-serial';
 import type { ChipMetadata } from './chipMetadata/types';
@@ -250,8 +251,8 @@ export function createEsptoolClient({
   };
 
   const logger = createLogger(terminal, debugLogging);
-  const esp_loader = new ESPLoader(port, logger);
-  let loader = esp_loader;
+  const esp_loader = new P4CompatibleLoader(port, logger);
+  let loader: ESPLoader = esp_loader;
   loader.debug = debugLogging;
 
   const loaderProxy = new Proxy({} as ESPLoader, {

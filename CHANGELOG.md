@@ -2,7 +2,7 @@
 
 ## 1.1.22
 ### Fixed
-- Backported ESP32-P4 revision 3.2 flash power initialization for connection and reconnection ([issue #175](https://github.com/thelastoutpostworkshop/ESPConnect/issues/175)).
+- Backported ESP32-P4 revision 3.2 flash power initialization and updated flasher stub, with one UnixTight reset retry on stub failure for external USB-serial connections ([issue #175](https://github.com/thelastoutpostworkshop/ESPConnect/issues/175)).
 - Added ESP32-S31 compatibility support to tasmota-webserial-esptool v7.3.10, including the S31 stub and corrected flash-register addresses ([issue #172](https://github.com/thelastoutpostworkshop/ESPConnect/issues/172)).
 - Session log now identifies the active ESP32-S31 and ESP32-P4 revision 3.2 compatibility patches.
 
