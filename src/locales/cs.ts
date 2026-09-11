@@ -629,6 +629,7 @@ const cs = {
     german: 'German',
     czech: 'Čeština',
     spanish: 'Español',
+    vietnamese: 'Tiếng Việt',
     switchTo: 'Přepnout do jazyka {language}',
   },
   theme: {
